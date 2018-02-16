@@ -40,6 +40,8 @@ for (f in results_files){
   # now input this information
   d$participant <- temp[2]
   
+  d$block <- as.numeric(temp[3])
+  
   d$part <- substring(temp[4],5,5)
   
   # bind to df
