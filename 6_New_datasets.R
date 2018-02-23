@@ -6,15 +6,17 @@
 # This script will produce datasets about:
 # Expected accuracy had they performed optimally
 # Expected accuracy based on fixation locations (to account for chance)
-# Proportion of time looking at side vs centre across 7 tested distances
-#    - Also by block number (first half vs second half)
 # Actual Accuracy accross blocks: 
 #    - Doesn't Alasdair's script do this one?
-# 6_?
+# Proportion of time looking at side vs centre across 9 tested distances
+#    - Also by block number (first half vs second half)
+
+
 
 #### libraries needed ####
 library(tidyverse)
 library(reshape2)
+library(psyphy)
 
 #### Extra information ####
 # I think there were 36 pixels per degree... Will have to check though
@@ -108,6 +110,8 @@ load("scratch/acc_sep")
 
 # tidy 
 # rm(m, ss, i, p, sep, y)
+# tidy if loop not run
+rm(sep)
 
 #### Part 1 plots #### 
 # summray data for mean accuracy 
@@ -179,19 +183,23 @@ switch_df$act_acc[switch_df$centre == 1] <- 0.75
 
 #### make column for optimal accuracy ####
 # first make opt fixation location
-switch_df$opt_fix <- 0 
-switch_df$opt_fix[switch_df$separation > switch_df$switch_point] <- 1
+switch_df$opt_fix <- 0
+# # this way gives some people opt accuracy below 0.75, may need to redefine their accuracy?
+# switch_df$opt_fix[switch_df$separation > switch_df$switch_point] <- 1
+# This way should work
+switch_df$opt_fix[switch_df$accuracy > 0.75] <- 1
+
 
 # now give accuracy if they had followed this strategy
 switch_df$opt_acc <- switch_df$accuracy
 switch_df$opt_acc[switch_df$opt_fix == 1] <- 0.75
 
-#### make new datasets #### 
+#### Accuracy: make new datasets #### 
 # first, set first half vs second half 
 switch_df$half[switch_df$block < 5] <- "first"
 switch_df$half[switch_df$block > 4] <- "second"
 
-#### Actual ####
+#### Accuracy: Actual ####
 # sort out actual accuracy 
 temp <- group_by(switch_df, participant, half, standard_sep, condition)
 Act_accuracy <- summarise(temp, mean_acc = mean(correct))
@@ -208,7 +216,7 @@ colnames(Act_accuracy) <- c("participant",
                             "acc_type")
 
 
-#### Optimal ####
+#### Accuracy: Optimal ####
 # Add in optimal accuracy 
 Opt_accuracy <- summarise(temp, mean_opt = mean(opt_acc))
 
@@ -223,7 +231,7 @@ colnames(Opt_accuracy) <- c("participant",
                             "Accuracy",
                             "acc_type")
 
-#### Expected Actual ####
+#### Accuracy: Expected Actual ####
 # sort expected actual accuracy 
 Exp_accuracy <- summarise(temp, mean_exp = mean(act_acc))
 
@@ -241,7 +249,7 @@ colnames(Exp_accuracy) <- c("participant",
 # tidy 
 rm(temp)
 
-#### Combine these? ####
+#### Accuracy: Combine these? ####
 Elle_accuracy_data <- rbind(Exp_accuracy, Opt_accuracy, Act_accuracy)
 
 # reorder 
@@ -253,9 +261,7 @@ Elle_accuracy_data <- select(Elle_accuracy_data,
                              acc_type,
                              Accuracy)
 
-
-
-#### reshaping data ####
+#### Accuracy: reshaping data ####
 # for all the data together
 Elle_accuracy_data_wide <- dcast(Elle_accuracy_data,
                                  participant + 
@@ -303,6 +309,127 @@ write.table(Exp_accuracy_wide, "Elle_data/Expected_Accuracy", row.names = FALSE,
 # Opt
 write.table(Opt_accuracy_wide, "Elle_data/Optimal_Accuracy", row.names = FALSE, sep = "\t")
 
-#### Standing pos propportions ####
-# to be done
+# tidy
+rm(Act_accuracy,
+   Act_accuracy_wide,
+   Elle_accuracy_data,
+   Elle_accuracy_data_wide,
+   Exp_accuracy,
+   Exp_accuracy_wide,
+   Opt_accuracy,
+   Opt_accuracy_wide)
+
+#### Fixation pos propportions ####
+# only need optimal and actual, should be the same as above pretty much
+# exception, need to do side and centre seperately
+# Actual
+# Get proportions
+# centre
+temp <- group_by(switch_df, participant, half, standard_sep, condition)
+Act_fixation_pos_centre <- summarise(temp, mean_fix_pos = mean(centre))
+
+# add box column
+Act_fixation_pos_centre$box <- "Centre"
+
+# side 
+Act_fixation_pos_side <- summarise(temp, mean_fix_pos = 1 - mean(centre))
+
+# add box column
+Act_fixation_pos_side$box <- "Side"
+
+# combine the two 
+Act_fixation_pos <- rbind(Act_fixation_pos_centre, Act_fixation_pos_side)
+
+# define type of fixation_pos 
+Act_fixation_pos$fix_type <- "Actual"
+
+# sort order
+Act_fixation_pos <- select(Act_fixation_pos,
+                           participant,
+                           condition,
+                           half,
+                           standard_sep,
+                           fix_type,
+                           box,
+                           mean_fix_pos)
+
+# Optimal
+# Get proportions
+# centre
+temp <- group_by(switch_df, participant, half, standard_sep, condition)
+Opt_fixation_pos_centre <- summarise(temp, mean_fix_pos = mean(opt_fix))
+
+# add box column
+Opt_fixation_pos_centre$box <- "Centre"
+
+# side 
+Opt_fixation_pos_side <- summarise(temp, mean_fix_pos = 1 - mean(opt_fix))
+
+# add box column
+Opt_fixation_pos_side$box <- "Side"
+
+# combine the two 
+Opt_fixation_pos <- rbind(Opt_fixation_pos_centre, Opt_fixation_pos_side)
+
+# define type of fixation_pos 
+Opt_fixation_pos$fix_type <- "Optimal"
+
+# tidy 
+rm(temp)
+
+# sort out the order
+Opt_fixation_pos <- select(Opt_fixation_pos,
+                           participant,
+                           condition,
+                           half,
+                           standard_sep,
+                           fix_type,
+                           box,
+                           mean_fix_pos)
+
+
+
+#### Fixations: make datasets combined ####
+Elle_fix_data <- rbind(Opt_fixation_pos, Act_fixation_pos)
+
+#### Fixations: make wide versions ####
+# Actual 
+Elle_fix_actual_wide <- dcast(Act_fixation_pos,
+                              participant + 
+                                condition ~
+                                box +
+                                half +
+                                standard_sep +
+                                fix_type,
+                                value.var = "mean_fix_pos")
+
+# Optimal
+Elle_fix_optimal_wide <- dcast(Opt_fixation_pos,
+                              participant + 
+                                condition ~
+                                box +
+                                half +
+                                standard_sep +
+                                fix_type,
+                              value.var = "mean_fix_pos")
+
+
+#### Fixations: save separate text files ####
+# Optimal
+write.table(Elle_fix_optimal_wide, "Elle_data/Optimal_Fixations", row.names = FALSE, sep = "\t")
+
+# Actual
+write.table(Elle_fix_actual_wide, "Elle_data/Actual_Fixations", row.names = FALSE, sep = "\t")
+
+# tidy
+rm(Act_fixation_pos,
+   Act_fixation_pos_centre,
+   Act_fixation_pos_side,
+   Elle_fix_actual_wide,
+   Elle_fix_data,
+   Elle_fix_optimal_wide,
+   Opt_fixation_pos,
+   Opt_fixation_pos_centre,
+   Opt_fixation_pos_side)
+
 
