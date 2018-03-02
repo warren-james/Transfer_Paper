@@ -24,8 +24,6 @@ results_files <- dir("data/switching_points/")
 count <- 1
 
 # read in the Matlab data 
-#temp <- readMat("data/switching_points/0_99.mat")
-
 for (f in results_files){
   d <- readMat(
     paste("data/switching_points/", f, sep=""))

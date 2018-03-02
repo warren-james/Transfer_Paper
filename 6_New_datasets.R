@@ -128,7 +128,7 @@ plt = plt + geom_point(data=agdat, aes(x=separation, y=meanAcc))
 plt = plt + facet_wrap(~participant) + theme_minimal()
 plt = plt + scale_y_continuous(name="proportion correct", breaks=c(0.25, 0.5, 0.75, 1.0))
 plt = plt + scale_x_continuous(name="separation (pixels for now)", limits=c(0,450), breaks=c(0,150,300,450))
-# ggsave("scratch/Part_1_Plots.pdf")
+# ggsave("scratch/Part_1_Plots.pdf", height = 10, width = 10)
 # or as png?
 # ggsave("scratch/Part_1_Plots.png")
 
