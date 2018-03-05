@@ -114,15 +114,17 @@ load("scratch/acc_sep")
 rm(sep)
 
 #### Part 1 plots #### 
-# summray data for mean accuracy 
-temp <- group_by(df, participant, separation)
+# remove NA's 
+df_nar <- df[complete.cases(df),]
+# summary data for mean accuracy 
+temp <- group_by(df_nar, participant, separation)
 agdat <- summarise(temp, meanAcc = mean(accuracy))
 
 # tidy 
 rm(temp)
 
 # make plot
-plt = ggplot(df, aes(x=separation, y=accuracy)) 
+plt = ggplot(df_nar, aes(x=separation, y=accuracy)) 
 plt = plt + stat_smooth(colour="black", method=glm, method.args = list(family=binomial(mafc.probit(2))), se=F, fullrange=TRUE) 
 plt = plt + geom_point(data=agdat, aes(x=separation, y=meanAcc))
 plt = plt + facet_wrap(~participant) + theme_minimal()
@@ -179,7 +181,7 @@ rm(i)
 #### column for accuracy given fixation location ####
 # gives accuracy given where they looked based on separation
 switch_df$act_acc <- switch_df$accuracy
-switch_df$act_acc[switch_df$centre == 1] <- 0.75
+switch_df$act_acc[switch_df$centre == 0] <- 0.75
 
 #### make column for optimal accuracy ####
 # first make opt fixation location
@@ -192,7 +194,7 @@ switch_df$opt_fix[switch_df$accuracy > 0.75] <- 1
 
 # now give accuracy if they had followed this strategy
 switch_df$opt_acc <- switch_df$accuracy
-switch_df$opt_acc[switch_df$opt_fix == 1] <- 0.75
+switch_df$opt_acc[switch_df$opt_fix == 0] <- 0.75
 
 #### Accuracy: make new datasets #### 
 # first, set first half vs second half 
