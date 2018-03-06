@@ -1,4 +1,4 @@
-#### Plotting Script #### 
+#### Creating new datasets #### 
 # Level 4 Thesis by Elle
 # 2017/18
 # Written by Warren James
@@ -160,6 +160,17 @@ switch_df <- select(switch_df,
 # probably want to round switch_point 
 switch_df$switch_point <- as.numeric(switch_df$switch_point)
 switch_df$switch_point <- round(switch_df$switch_point)
+
+# check switch points against accuracy 
+temp <- group_by(switch_df, participant, separation)
+temp <- summarise(temp, mean_acc = mean(accuracy))
+
+switch_points <- group_by(switch_df, participant)
+switch_points <- summarise(switch_points, switch_point = unique(switch_point))
+temp <- merge(temp, switch_points)
+
+# tidy 
+rm(temp)
 
 # NB: as.factor() then as.numeric() will produce a number for each level
 #     Use this to transform data so it's standardised accross participants
