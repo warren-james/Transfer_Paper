@@ -70,9 +70,9 @@ rm(i)
 #### Create column for whether they made the optimal choice or not ####
 # Make side vs centre first 
 # Think this is right, check the script though
-# 1 = left, 2 = middle, 3 = right
+# 1 = centre, 2 & 3 = sides
 switch_df$centre <- 0
-switch_df$centre[switch_df$fixated_box == 2] <- 1
+switch_df$centre[switch_df$fixated_box == 1] <- 1
 
 
 #### save the file (everything) ####

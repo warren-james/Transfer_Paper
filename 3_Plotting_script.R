@@ -73,7 +73,51 @@ prop_plt <- prop_plt + facet_wrap(~condition + participant)
 prop_plt
 
 # save plot 
-# ggsave("scratch/proportions_plot.pdf", width = 10, height = 10)
+# ggsave("scratch/plots/proportions_plot.pdf", width = 10, height = 10)
+
+#### CHECK: just part 3 participants ####
+# df_part3 <- switch_df[switch_df$part == 3,]
+# 
+# #### make plots ####
+# # setup data.frame/tibble for plots
+# # centre proportions
+# temp <- group_by(df_part3, participant,separation,condition)
+# centre_prop <- summarise(temp, prop_fixated = mean(centre))
+# centre_prop$box <- "centre"
+# 
+# # side proportions
+# side_prop <- summarise(temp, prop_fixated = 1 - mean(centre))
+# side_prop$box <- "side"
+# 
+# # tidy
+# rm(temp)
+# 
+# # merge data
+# plt_dat3 <- rbind(centre_prop, side_prop)
+# 
+# # tidy 
+# rm(centre_prop, side_prop)
+# 
+# # need to add switch point data back in 
+# temp <- group_by(df_part3, participant, condition)
+# switch_points <- summarise(temp, switch_point = unique(switch_point))
+# 
+# # tidy 
+# rm(temp)
+# 
+# # now to make the plots 
+# prop_plt <- ggplot(data = plt_dat3, 
+#                    aes(x = separation,
+#                        y = prop_fixated))
+# prop_plt <- prop_plt + geom_area(aes(colour = box,
+#                                      fill = box),
+#                                  position = "stack")
+# prop_plt <- prop_plt + geom_vline(data = switch_points,
+#                                   aes(xintercept = as.numeric(switch_point)), 
+#                                   linetype = "dashed")
+# prop_plt <- prop_plt + facet_wrap(~condition + participant)
+# prop_plt
+# Running the part above shows the code is fine
 
 #### boxplots of accuracy ####
 # make boxplot data

@@ -130,9 +130,9 @@ plt = plt + geom_point(data=agdat, aes(x=separation, y=meanAcc))
 plt = plt + facet_wrap(~participant) + theme_minimal()
 plt = plt + scale_y_continuous(name="proportion correct", breaks=c(0.25, 0.5, 0.75, 1.0))
 plt = plt + scale_x_continuous(name="separation (pixels for now)", limits=c(0,450), breaks=c(0,150,300,450))
-# ggsave("scratch/Part_1_Plots.pdf", height = 10, width = 10)
+# ggsave("scratch/plots/Part_1_Plots.pdf", height = 10, width = 10)
 # or as png?
-# ggsave("scratch/Part_1_Plots.png")
+# ggsave("scratch/plots/Part_1_Plots.png")
 
 # tidy 
 rm(plt, agdat)
@@ -196,6 +196,10 @@ switch_df$opt_fix[switch_df$accuracy > 0.75] <- 1
 switch_df$opt_acc <- switch_df$accuracy
 switch_df$opt_acc[switch_df$opt_fix == 0] <- 0.75
 
+# Now get Expected Accuracy 
+switch_df$exp_acc <- switch_df$accuracy
+switch_df$exp_acc[switch_df$centre == 0] <- 0.75
+
 #### Accuracy: make new datasets #### 
 # first, set first half vs second half 
 switch_df$half[switch_df$block < 5] <- "first"
@@ -235,7 +239,7 @@ colnames(Opt_accuracy) <- c("participant",
 
 #### Accuracy: Expected Actual ####
 # sort expected actual accuracy 
-Exp_accuracy <- summarise(temp, mean_exp = mean(act_acc))
+Exp_accuracy <- summarise(temp, mean_exp = mean(exp_acc))
 
 # define type of accuracy 
 Exp_accuracy$acc_type <- "Expected"
