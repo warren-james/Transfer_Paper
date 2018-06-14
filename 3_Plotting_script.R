@@ -8,6 +8,16 @@
 #### libraries needed ####
 library(tidyverse)
 
+#### Any functions ####
+# Gets Visual Degrees
+get_VisDegs <- function(separation,distance){
+  ((2*atan2(separation,(2*distance)))*180)/pi
+}
+
+#### Any constants ####
+Screen_dist <- 54.4
+ppcm <- 1920/54
+
 #### load in data ####
 load("scratch/Elle_switch_nar_data")
 
@@ -74,6 +84,73 @@ prop_plt
 
 # save plot 
 # ggsave("scratch/plots/proportions_plot.pdf", width = 10, height = 10)
+
+# dots version 
+side_fix_dat <- plt_dat[plt_dat$box == "side",]
+
+dot_plt <- ggplot(side_fix_dat, aes(x = separation, y = prop_fixated))
+dot_plt <- dot_plt + geom_point()
+dot_plt <- dot_plt + facet_wrap(~participant, ncol = 6)
+dot_plt <- dot_plt + theme(strip.background = element_blank(),
+                     strip.text.x = element_blank())
+
+# tidy 
+rm(plt_dat, side_fix_dat)
+
+#### Make plots for Amelia talk/publications ####
+switch_df$half <- "First"
+switch_df$half[switch_df$block > 4] <- "Second"
+
+# setup new data frame 
+side_prop <- switch_df %>% 
+  group_by(participant, separation, condition, half) %>%
+  summarise(prop_fixated = 1 - mean(centre))
+
+# sort out line(s)
+# setup separations
+seps <- seq(min(side_prop$separation), max(side_prop$separation), 0.5)
+
+# setup new dataframe
+opt_fixations <- tibble(participant = character(),
+                        condition = character(),
+                        separation = numeric(),
+                        fix_location = numeric())
+
+for(i in unique(switch_df$participant)){
+  d <- switch_df[switch_df$participant == i,]
+  for(x in seps){
+    if(x < as.numeric(unique(d$switch_point))){
+      fl <- 0
+    } else if(x > as.numeric(unique(d$switch_point))){
+      fl <- 1
+    }
+    opt_fixations <- rbind(opt_fixations, data.frame(participant = i,
+                                                     condition = unique(d$condition),
+                                                     separation = x,
+                                                     fix_locations = fl))
+  }
+}
+
+# make plot 
+dot_plt <- ggplot(side_prop, aes(get_VisDegs(separation/ppcm, Screen_dist), 
+                                 prop_fixated,
+                                 colour = half))
+dot_plt <- dot_plt + geom_point(alpha = 0.5)
+dot_plt <- dot_plt + theme_bw()
+dot_plt <- dot_plt + facet_wrap(~condition + participant, ncol = 6)
+dot_plt <- dot_plt + geom_path(data = opt_fixations,
+                               colour = "blue",
+                               aes(get_VisDegs(separation/ppcm, Screen_dist),
+                                   fix_locations))
+dot_plt <- dot_plt + theme(strip.background = element_blank(),
+                           strip.text.x = element_blank())
+dot_plt$labels$x <- "Delta (in Visual Degrees)"
+dot_plt$labels$y <- "Proportion of Fixations to the side boxes"
+dot_plt$labels$colour <- "Half"
+
+# save this 
+ggsave("scratch/plots/Part_2_plots.pdf")
+
 
 #### CHECK: just part 3 participants ####
 # df_part3 <- switch_df[switch_df$part == 3,]
