@@ -133,20 +133,25 @@ for(i in unique(switch_df$participant)){
 
 # make plot 
 dot_plt <- ggplot(side_prop, aes(get_VisDegs(separation/ppcm, Screen_dist), 
-                                 prop_fixated,
-                                 colour = half))
-dot_plt <- dot_plt + geom_point(alpha = 0.5)
+                                 prop_fixated))#,
+                                 #colour = half))
+dot_plt <- dot_plt + geom_point(aes(shape = half,
+                                    colour = half)) + 
+                     scale_shape_manual(values=c(3,4))
 dot_plt <- dot_plt + theme_bw()
 dot_plt <- dot_plt + facet_wrap(~condition + participant, ncol = 6)
 dot_plt <- dot_plt + geom_path(data = opt_fixations,
                                colour = "blue",
                                aes(get_VisDegs(separation/ppcm, Screen_dist),
-                                   fix_locations))
+                                   fix_locations),
+                               size = 0.15)
 dot_plt <- dot_plt + theme(strip.background = element_blank(),
                            strip.text.x = element_blank())
 dot_plt$labels$x <- "Delta (in Visual Degrees)"
 dot_plt$labels$y <- "Proportion of Fixations to the side boxes"
+dot_plt$labels$shape <- "Half"
 dot_plt$labels$colour <- "Half"
+
 
 # save this 
 ggsave("scratch/plots/Part_2_plots.pdf")
