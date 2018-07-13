@@ -1,0 +1,78 @@
+#### Instructed eye movements #####
+# written by Warren James
+# this is just to make the new plots using optimal performance compared to actual accuracy 
+
+#### libraries needed ####
+library(tidyverse)
+library(reshape2)
+library(psyphy)
+
+#### any functions #### 
+get_VisDegs <- function(separation,distance){
+  ((2*atan2(separation,(2*distance)))*180)/pi
+}
+
+#### Constants ####
+Screen_dist <- 53
+ppcm <- 1920/54
+
+#### load in data ####
+# all data
+load("scratch/switch_df")
+
+# Just accuracy data
+load("scratch/Elle_acc_dat")
+
+# fixations 
+load("scratch/Elle_fix_data")
+
+#### Make plots ####
+#### PLOT: Accuracy ####
+# setup data 
+Acc_Actual <- Elle_accuracy_data[Elle_accuracy_data$acc_type == "Actual",]
+Acc_Optimal <- Elle_accuracy_data[Elle_accuracy_data$acc_type == "Optimal",]
+
+plt <- ggplot(Acc_Actual[Acc_Actual$half == "second",],
+              aes(offset_from_sp,
+                  Accuracy))
+plt <- plt + theme_bw()
+plt <- plt + geom_point()
+plt <- plt + geom_line(data = Acc_Optimal,
+                       aes(offset_from_sp,
+                           Accuracy),
+                       colour = "red")
+plt <- plt + theme(strip.background = element_blank(),
+                   strip.text.x = element_blank(),
+                   panel.border = element_blank())
+plt <- plt + facet_wrap(~participant)
+plt$labels$x <- "Offset from Switch Point (Visual Degrees)"
+plt
+# # save 
+# ggsave("scratch/plots/Part_2_ActVsOptAccuracy.png")
+
+# tidy 
+rm(plt, Acc_Optimal, Acc_Actual)
+
+#### PLOT: Fxations ####
+# setup data
+Fix_Actual <- Elle_fix_data[Elle_fix_data$fix_type == "Actual" & 
+                              Elle_fix_data$box == "Side",]
+
+plt <- ggplot(Fix_Actual[Fix_Actual$half == "second",],
+              aes(offset_from_sp,
+                  mean_fix_pos,
+              colour = as.factor(participant)))
+plt <- plt + theme_bw()
+plt <- plt + geom_line()
+plt <- plt + theme(legend.position="none",
+                   panel.border = element_blank())
+plt$labels$x <- "Offset from Switch Point (Visual Degrees)"
+plt$labels$y <- "Proportion of Fixations to the side"
+# save 
+# ggsave("scratch/plots/Part_2_ActFixProps.png")
+
+
+
+
+
+

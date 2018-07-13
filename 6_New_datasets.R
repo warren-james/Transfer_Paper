@@ -18,6 +18,15 @@ library(tidyverse)
 library(reshape2)
 library(psyphy)
 
+#### any functions #### 
+get_VisDegs <- function(separation,distance){
+  ((2*atan2(separation,(2*distance)))*180)/pi
+}
+
+#### Constants ####
+Screen_dist <- 53
+ppcm <- 1920/54
+
 #### Extra information ####
 # I think there were 36 pixels per degree... Will have to check though
 pixVD = 0.036
@@ -189,6 +198,49 @@ switch_df$standard_sep <- switch_df$standard_sep - 5
 #tidy
 rm(i)
 
+#### NOTE: this is wrong ####
+# 0 needs to be switch point not just the middle of the separations tested at
+temp <- switch_df
+
+new_sep_dat <- tibble(participant = character(),
+                      separation = numeric(),
+                      as_numbers = numeric(), #Standardised
+                      as_factors = character(), # Standardised as factors
+                      offset_from_sp = numeric()) # Offset from switch_point in VD
+
+for(p in unique(temp$participant)){
+  a <- -3
+  sp <- unique(temp$switch_point[temp$participant == p])
+  for(s in sort(unique(temp$separation[temp$participant == p]))){
+    if(s == 284){
+      new_sep <- a - 0.5
+      new_sep2 <- as.factor(s)
+    } else if(s == 640) {
+      new_sep <- a
+      new_sep2 <- as.factor(s)
+    } else {
+      new_sep <- a 
+      new_sep2 <- as.factor(new_sep)
+      a <- a + 1
+    }
+    new_sep3 <- get_VisDegs((s - sp)/ppcm,Screen_dist)
+    new_sep_dat <- rbind(new_sep_dat, data.frame(participant = p,
+                                                 separation = s,
+                                                 as_numbers = new_sep,
+                                                 as_factors = new_sep2,
+                                                 offset_from_sp = new_sep3))
+  }
+}
+
+# tidy 
+rm(a, p, s, new_sep, new_sep2, new_sep3, sp, temp)
+
+# save this so it can be merged in other scripts etc. 
+save(new_sep_dat, file = "scratch/new_slabs_dat")
+
+# add this data into the switch_df we have 
+switch_df <- merge(switch_df, new_sep_dat)
+
 #### column for accuracy given fixation location ####
 # gives accuracy given where they looked based on separation
 switch_df$act_acc <- switch_df$accuracy
@@ -216,9 +268,12 @@ switch_df$exp_acc[switch_df$centre == 0] <- 0.75
 switch_df$half[switch_df$block < 5] <- "first"
 switch_df$half[switch_df$block > 4] <- "second"
 
+# save this 
+save(switch_df, file = "scratch/switch_df")
+
 #### Accuracy: Actual ####
 # sort out actual accuracy 
-temp <- group_by(switch_df, participant, half, standard_sep, condition)
+temp <- group_by(switch_df, participant, half, as_numbers, as_factors, offset_from_sp, condition)
 Act_accuracy <- summarise(temp, mean_acc = mean(correct))
 
 # define type of accuracy 
@@ -227,7 +282,9 @@ Act_accuracy$acc_type <- "Actual"
 # change column names 
 colnames(Act_accuracy) <- c("participant",
                             "half",
-                            "standard_sep",
+                            "as_numbers",
+                            "as_factors",
+                            "offset_from_sp",
                             "condition",
                             "Accuracy",
                             "acc_type")
@@ -243,7 +300,9 @@ Opt_accuracy$acc_type <- "Optimal"
 # change column names 
 colnames(Opt_accuracy) <- c("participant",
                             "half",
-                            "standard_sep",
+                            "as_numbers",
+                            "as_factors",
+                            "offset_from_sp",
                             "condition",
                             "Accuracy",
                             "acc_type")
@@ -258,7 +317,9 @@ Exp_accuracy$acc_type <- "Expected"
 # change column names 
 colnames(Exp_accuracy) <- c("participant",
                             "half",
-                            "standard_sep",
+                            "as_numbers",
+                            "as_factors",
+                            "offset_from_sp",
                             "condition",
                             "Accuracy",
                             "acc_type")
@@ -266,83 +327,90 @@ colnames(Exp_accuracy) <- c("participant",
 # tidy 
 rm(temp)
 
+#
+
 #### Accuracy: Combine these? ####
 Elle_accuracy_data <- rbind(Exp_accuracy, Opt_accuracy, Act_accuracy)
+save(Elle_accuracy_data, file = "scratch/Elle_acc_dat")
+# make .txt file 
+write.table(Elle_accuracy_data, file = "scratch/Accuracy_file.txt", sep = "\t")
+
+#### NEED TO FIX BELOW THIS POINT ####
 
 # reorder 
-Elle_accuracy_data <- select(Elle_accuracy_data, 
-                             participant,
-                             condition,
-                             half,
-                             standard_sep,
-                             acc_type,
-                             Accuracy)
+# Elle_accuracy_data <- select(Elle_accuracy_data, 
+#                              participant,
+#                              condition,
+#                              half,
+#                              standard_sep,
+#                              acc_type,
+#                              Accuracy)
 
 #### Accuracy: reshaping data ####
 # for all the data together
-Elle_accuracy_data_wide <- dcast(Elle_accuracy_data,
-                                 participant + 
-                                   condition ~
-                                   half +
-                                   standard_sep +
-                                   acc_type,
-                                 value.var = "Accuracy")
+# Elle_accuracy_data_wide <- dcast(Elle_accuracy_data,
+#                                  participant + 
+#                                    condition ~
+#                                    half +
+#                                    standard_sep +
+#                                    acc_type,
+#                                  value.var = "Accuracy")
 
 # each individually 
 # Actual
-Act_accuracy_wide <- dcast(Act_accuracy,
-                           participant + 
-                             condition ~
-                             half +
-                             standard_sep +
-                             acc_type,
-                           value.var = "Accuracy")
+# Act_accuracy_wide <- dcast(Act_accuracy,
+#                            participant + 
+#                              condition ~
+#                              half +
+#                              standard_sep +
+#                              acc_type,
+#                            value.var = "Accuracy")
 
 # Optimal
-Opt_accuracy_wide <- dcast(Opt_accuracy,
-                           participant + 
-                             condition ~
-                             half +
-                             standard_sep +
-                             acc_type,
-                           value.var = "Accuracy")
+# Opt_accuracy_wide <- dcast(Opt_accuracy,
+#                            participant + 
+#                              condition ~
+#                              half +
+#                              standard_sep +
+#                              acc_type,
+#                            value.var = "Accuracy")
 
 # Expected 
-Exp_accuracy_wide <- dcast(Exp_accuracy,
-                           participant + 
-                             condition ~
-                             half +
-                             standard_sep +
-                             acc_type,
-                           value.var = "Accuracy")
+# Exp_accuracy_wide <- dcast(Exp_accuracy,
+#                            participant + 
+#                              condition ~
+#                              half +
+#                              standard_sep +
+#                              acc_type,
+#                            value.var = "Accuracy")
 
 # save txt files to be imported to excel 
 # Act
-write.table(Act_accuracy_wide, "Elle_data/Actual_Accuracy", row.names = FALSE, sep = "\t")
+# write.table(Act_accuracy_wide, "Elle_data/Actual_Accuracy.txt", row.names = FALSE, sep = "\t")
+# 
+# # Exp
+# write.table(Exp_accuracy_wide, "Elle_data/Expected_Accuracy.txt", row.names = FALSE, sep = "\t")
+# 
+# # Opt
+# write.table(Opt_accuracy_wide, "Elle_data/Optimal_Accuracy.txt", row.names = FALSE, sep = "\t")
 
-# Exp
-write.table(Exp_accuracy_wide, "Elle_data/Expected_Accuracy", row.names = FALSE, sep = "\t")
-
-# Opt
-write.table(Opt_accuracy_wide, "Elle_data/Optimal_Accuracy", row.names = FALSE, sep = "\t")
-
-# tidy
-rm(Act_accuracy,
-   Act_accuracy_wide,
-   Elle_accuracy_data,
-   Elle_accuracy_data_wide,
-   Exp_accuracy,
-   Exp_accuracy_wide,
-   Opt_accuracy,
-   Opt_accuracy_wide)
-
+# # tidy
+# rm(Act_accuracy,
+#    Act_accuracy_wide,
+#    Elle_accuracy_data,
+#    Elle_accuracy_data_wide,
+#    Exp_accuracy,
+#    Exp_accuracy_wide,
+#    Opt_accuracy,
+#    Opt_accuracy_wide)
+ 
 #### Fixation pos propportions ####
 # only need optimal and actual, should be the same as above pretty much
 # exception, need to do side and centre seperately
 # Actual
 # Get proportions
 # centre
-temp <- group_by(switch_df, participant, half, standard_sep, condition)
+temp <- group_by(switch_df, participant, half, as_numbers, as_factors, offset_from_sp, condition)
 Act_fixation_pos_centre <- summarise(temp, mean_fix_pos = mean(centre))
 
 # add box column
@@ -361,19 +429,19 @@ Act_fixation_pos <- rbind(Act_fixation_pos_centre, Act_fixation_pos_side)
 Act_fixation_pos$fix_type <- "Actual"
 
 # sort order
-Act_fixation_pos <- select(Act_fixation_pos,
-                           participant,
-                           condition,
-                           half,
-                           standard_sep,
-                           fix_type,
-                           box,
-                           mean_fix_pos)
+# Act_fixation_pos <- select(Act_fixation_pos,
+#                            participant,
+#                            condition,
+#                            half,
+#                            standard_sep,
+#                            fix_type,
+#                            box,
+#                            mean_fix_pos)
 
 # Optimal
 # Get proportions
 # centre
-temp <- group_by(switch_df, participant, half, standard_sep, condition)
+temp <- group_by(switch_df, participant, half, as_numbers, as_factors, offset_from_sp, condition)
 Opt_fixation_pos_centre <- summarise(temp, mean_fix_pos = mean(opt_fix))
 
 # add box column
@@ -395,58 +463,65 @@ Opt_fixation_pos$fix_type <- "Optimal"
 rm(temp)
 
 # sort out the order
-Opt_fixation_pos <- select(Opt_fixation_pos,
-                           participant,
-                           condition,
-                           half,
-                           standard_sep,
-                           fix_type,
-                           box,
-                           mean_fix_pos)
+# Opt_fixation_pos <- select(Opt_fixation_pos,
+#                            participant,
+#                            condition,
+#                            half,
+#                            standard_sep,
+#                            fix_type,
+#                            box,
+#                            mean_fix_pos)
 
 
 
 #### Fixations: make datasets combined ####
 Elle_fix_data <- rbind(Opt_fixation_pos, Act_fixation_pos)
 
-#### Fixations: make wide versions ####
-# Actual 
-Elle_fix_actual_wide <- dcast(Act_fixation_pos,
-                              participant + 
-                                condition ~
-                                box +
-                                half +
-                                standard_sep +
-                                fix_type,
-                                value.var = "mean_fix_pos")
+# save this 
+save(Elle_fix_data, file = "scratch/Elle_fix_data")
 
-# Optimal
-Elle_fix_optimal_wide <- dcast(Opt_fixation_pos,
-                              participant + 
-                                condition ~
-                                box +
-                                half +
-                                standard_sep +
-                                fix_type,
-                              value.var = "mean_fix_pos")
+# make .txt file 
+write.table(Elle_fix_data, file = "scratch/Fixation_file.txt", sep = "\t")
+
+
+#### Fixations: make wide versions ####
+# # Actual 
+# Elle_fix_actual_wide <- dcast(Act_fixation_pos,
+#                               participant + 
+#                                 condition ~
+#                                 box +
+#                                 half +
+#                                 standard_sep +
+#                                 fix_type,
+#                                 value.var = "mean_fix_pos")
+# 
+# # Optimal
+# Elle_fix_optimal_wide <- dcast(Opt_fixation_pos,
+#                               participant + 
+#                                 condition ~
+#                                 box +
+#                                 half +
+#                                 standard_sep +
+#                                 fix_type,
+#                               value.var = "mean_fix_pos")
 
 
 #### Fixations: save separate text files ####
 # Optimal
-write.table(Elle_fix_optimal_wide, "Elle_data/Optimal_Fixations", row.names = FALSE, sep = "\t")
-
-# Actual
-write.table(Elle_fix_actual_wide, "Elle_data/Actual_Fixations", row.names = FALSE, sep = "\t")
+# write.table(Elle_fix_optimal_wide, "Elle_data/Optimal_Fixations", row.names = FALSE, sep = "\t")
+# 
+# # Actual
+# write.table(Elle_fix_actual_wide, "Elle_data/Actual_Fixations", row.names = FALSE, sep = "\t")
 
 # tidy
-rm(Act_fixation_pos,
-   Act_fixation_pos_centre,
-   Act_fixation_pos_side,
-   Elle_fix_actual_wide,
-   Elle_fix_data,
-   Elle_fix_optimal_wide,
-   Opt_fixation_pos,
-   Opt_fixation_pos_centre,
-   Opt_fixation_pos_side)
+# rm(Act_fixation_pos,
+#    Act_fixation_pos_centre,
+#    Act_fixation_pos_side,
+#    Elle_fix_actual_wide,
+#    Elle_fix_data,
+#    Elle_fix_optimal_wide,
+#    Opt_fixation_pos,
+#    Opt_fixation_pos_centre,
+#    Opt_fixation_pos_side)
 
 
