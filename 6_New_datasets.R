@@ -335,6 +335,33 @@ save(Elle_accuracy_data, file = "scratch/Elle_acc_dat")
 # make .txt file 
 write.table(Elle_accuracy_data, file = "scratch/Accuracy_file.txt", sep = "\t")
 
+#### sort out files for Joesphine ####
+temp <- group_by(switch_df, participant, half, as_numbers, as_factors, offset_from_sp, condition)
+Act_accuracy <- summarise(temp, mean_acc = mean(correct))
+
+switch_df$Vis_Degs <- get_VisDegs(switch_df$separation/ppcm, Screen_dist)
+
+#Actual
+Act_Acc_vdegs <- switch_df %>% 
+  group_by(participant, Vis_Degs, half, condition) %>% 
+  summarise(mean_acc = mean(correct))
+
+Act_Acc_vdegs$acc_type <- "Actual"
+
+#Optimal 
+Opt_Acc_vdegs <- switch_df %>%
+  group_by(participant, Vis_Degs, half, condition) %>% 
+  summarise(mean_acc = mean(opt_acc))
+
+Opt_Acc_vdegs$acc_type <- "Optimal"
+
+# combine these 
+Accuracy_vdegs <- rbind(Act_Acc_vdegs, Opt_Acc_vdegs)
+
+# save this 
+write.table(Accuracy_vdegs, file = "scratch/Accuracy_Vdegs.txt", row.names = F, sep = "\t")
+
+
 #### NEED TO FIX BELOW THIS POINT ####
 
 # reorder 
