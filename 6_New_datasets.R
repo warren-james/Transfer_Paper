@@ -336,9 +336,6 @@ save(Elle_accuracy_data, file = "scratch/Elle_acc_dat")
 write.table(Elle_accuracy_data, file = "scratch/Accuracy_file.txt", sep = "\t")
 
 #### sort out files for Joesphine ####
-temp <- group_by(switch_df, participant, half, as_numbers, as_factors, offset_from_sp, condition)
-Act_accuracy <- summarise(temp, mean_acc = mean(correct))
-
 switch_df$Vis_Degs <- get_VisDegs(switch_df$separation/ppcm, Screen_dist)
 
 #Actual
