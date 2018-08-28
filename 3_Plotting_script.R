@@ -88,11 +88,62 @@ prop_plt
 # dots version 
 side_fix_dat <- plt_dat[plt_dat$box == "side",]
 
-dot_plt <- ggplot(side_fix_dat, aes(x = separation, y = prop_fixated))
+#### Make switch line again ####
+seps <- seq(min(df_part2$separation), max(df_part2$separation), 0.5)
+
+switch_line <- tibble(participant = character(), 
+                      condition = character(),
+                      separation = numeric(),
+                      Fixated_box = numeric())
+
+# create the lines
+for(p in unique(df_part2$participant)){
+  switch <- unique(switch_points$switch_point[switch_points$participant == p])
+  switch <- as.numeric(switch)
+  c <- unique(df_part2$condition[df_part2$participant == p])
+  
+  # go through sequence
+  for(s in seps){
+    if(s < switch){
+      fl <- 0
+    } else if(s > switch){
+      fl <- 1
+    }
+    switch_line <- rbind(switch_line, data.frame(participant = p,
+                                                 condition = c,
+                                                 separation = s,
+                                                 Fixated_box = fl))
+  }
+}
+
+# tidy 
+rm(fl,p, s, seps, switch)
+
+#### Plot: Dot plot ####
+dot_plt <- ggplot(side_fix_dat, aes(get_VisDegs(separation/ppcm, Screen_dist),
+                                    prop_fixated,
+                                    colour = condition))
 dot_plt <- dot_plt + geom_point()
-dot_plt <- dot_plt + facet_wrap(~participant, ncol = 6)
+dot_plt <- dot_plt + geom_line(data = switch_line,
+                               aes(get_VisDegs(separation/ppcm, Screen_dist),
+                                   Fixated_box))
+dot_plt <- dot_plt + theme_bw()
+# dot_plt <- dot_plt + geom_path(data = switch_line,
+#                                colour = "black",
+#                                aes(get_VisDegs(separation/ppcm, Screen_dist),
+#                                    Fixated_box),
+#                                size = 0.15)
+dot_plt <- dot_plt + facet_wrap(~condition + participant, ncol = 6)
 dot_plt <- dot_plt + theme(strip.background = element_blank(),
-                     strip.text.x = element_blank())
+                           strip.text.x = element_blank(),
+                           legend.position = "bottom")
+dot_plt$labels$x <- "Delta (in Visual Degrees)"
+dot_plt$labels$y <- "Proportion of fixations to a side box"
+dot_plt$labels$colour <- "Condition"
+dot_plt
+
+# save 
+ggsave("scratch/plots/Part2_dots_wcolour.png")
 
 # tidy 
 rm(plt_dat, side_fix_dat)

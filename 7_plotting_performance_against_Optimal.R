@@ -71,6 +71,24 @@ plt$labels$y <- "Proportion of Fixations to the side"
 # save 
 # ggsave("scratch/plots/Part_2_ActFixProps.png")
 
+#### Try some line plots of overall accuracy #### 
+plt_dat_lines <- Elle_accuracy_data %>%
+  group_by(participant, half, condition, acc_type) %>%
+  summarise(Accuracy = mean(Accuracy))
+
+# make plot for second session: expected vs. optimal
+plt_lines <- ggplot(plt_dat_lines[plt_dat_lines$acc_type != "Actual" & 
+                                    plt_dat_lines$half == "second",],
+                    aes(acc_type, Accuracy))
+plt_lines <- plt_lines + theme_bw()
+plt_lines <- plt_lines + geom_point()
+plt_lines <- plt_lines + geom_line(aes(group = participant))
+plt_lines <- plt_lines + facet_wrap(~condition)
+plt_lines$labels$x <- "Accuracy Type"
+plt_lines
+
+# save 
+ggsave("scratch/plots/line_plot.png")
 
 
 
