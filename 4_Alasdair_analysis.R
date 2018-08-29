@@ -2,6 +2,7 @@
 #### libraries needed ####
 library(tidyverse)
 library(rethinking)
+rstan_options(auto_write = TRUE)
 library(viridisLite)
 
 
