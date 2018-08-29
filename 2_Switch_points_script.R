@@ -74,6 +74,10 @@ rm(i)
 switch_df$centre <- 0
 switch_df$centre[switch_df$fixated_box == 1] <- 1
 
+#### sort out participant order ####
+# REMEMBER TO CHECK THIS IS OK
+# pretty sure it is... so we should be fine 
+switch_df$participant <- as.numeric(as.factor(switch_df$participant))
 
 #### save the file (everything) ####
 save(switch_df, file = "scratch/Elle_switch_data")

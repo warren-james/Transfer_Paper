@@ -81,6 +81,8 @@ df <- select(df,
 # remove NA trials 
 df <- df[complete.cases(df),]
 
+df$participant <- as.numeric(as.factor(df$participant))
+
 #### Calculate curve for accuracy across distances ####
 sep <- c(1:450)
 
@@ -94,20 +96,21 @@ acc_sep <- tibble(
 # loop through participants for accuracy over all separations
 # very slow loop... must be a quicker way to do this?
 # the for(i in 1:640) causes it to slow... Can do this another way?
-#for (p in unique(df$participant))
-#{
+
+# for (p in unique(df$participant))
+# {
 #  # general linear model
 #  ss = df[which(df$participant==p),]
 #  m = glm(data=ss, accuracy~separation, family=binomial(mafc.probit(2)))
 #  for(i in 1:640){
 #    y = predict(m, data.frame(separation = i), type = "response")
-#    
+# 
 #    # add into new data frame
-#    acc_sep <- rbind(acc_sep, data.frame(participant = p, 
+#    acc_sep <- rbind(acc_sep, data.frame(participant = p,
 #                                         separation  = i,
 #                                         accuracy = y))
 #  }
-#}
+# }
 
 # participant 1 might need to be excluded
 
