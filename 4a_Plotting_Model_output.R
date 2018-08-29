@@ -59,30 +59,118 @@ plt_dat <- df %>%
 
 # now make a plot this 
 # just half
-plt <- ggplot()
-plt <- plt + theme_bw()
-plt <- plt + geom_ribbon(data = model_lines, 
-                         aes(x = second_half, ymin = lower, ymax = upper),
-                         alpha = 0.5)
-plt <- plt + geom_point(data = plt_dat, 
-                        aes(x = second_half, y = accuracy),
-                        shape = 3, alpha = 0.8, show.legend = FALSE) 
-plt <- plt + facet_wrap(~participant)
-plt
+# plt <- ggplot()
+# plt <- plt + theme_bw()
+# plt <- plt + geom_ribbon(data = model_lines, 
+#                          aes(x = second_half, ymin = lower, ymax = upper),
+#                          alpha = 0.5)
+# plt <- plt + geom_point(data = plt_dat, 
+#                         aes(x = second_half, y = accuracy),
+#                         shape = 3, alpha = 0.8, show.legend = FALSE) 
+# plt <- plt + facet_wrap(~participant)
+# plt
 
 # now under instructions 
-plt <- ggplot()
-plt <- plt + theme_bw()
-plt <- plt + geom_ribbon(data = model_lines,
-                         aes(given_instruction, ymin = lower, ymax = upper),
-                         alpha = 0.5)
-plt <- plt + geom_point(data = plt_dat, 
-                        aes(given_instruction, accuracy, colour = second_half),
-                        shape = 3, alpha = 0.8, show.legend = T)
-plt <- plt + theme(legend.position = "bottom")
-plt <- plt + facet_wrap(~participant)
-plt
+# plt <- ggplot()
+# plt <- plt + theme_bw()
+# plt <- plt + geom_ribbon(data = model_lines,
+#                          aes(given_instruction, ymin = lower, ymax = upper),
+#                          alpha = 0.5)
+# plt <- plt + geom_point(data = plt_dat, 
+#                         aes(given_instruction, accuracy, colour = second_half),
+#                         shape = 3, alpha = 0.8, show.legend = T)
+# plt <- plt + theme(legend.position = "bottom")
+# plt <- plt + facet_wrap(~participant)
+# plt
 
 #### how about we try some box plots ####
+box_plt_dat <- tibble(participant = numeric(),
+                      cond_type = numeric(),
+                      samples = numeric())
+
+for(ii in 1:24){
+  participant <- rep(ii, length(post$a_p[,ii])*4)
+  fx <- tibble(
+    cond_type = rep(c(
+      "Baseline", 
+      "Instructed", 
+      "Practice",
+      "Transfer"), each = length(post$a_p[,ii])),
+    samples = c(
+      logistic(post$a + post$a_p[,ii]), 
+      logistic(post$a + post$a_p[,ii] + post$instruction), 
+      logistic(post$a + post$a_p[,ii] + post$half),
+      logistic(post$a + post$a_p[,ii] + post$instruction + post$half + post$halfbyinst)))
+  
+  temp <- cbind(participant, fx)
+  box_plt_dat <- rbind(box_plt_dat, temp)
+}
+
+# tidy 
+rm(temp, fx, ii, participant)
+
+# now make plot... might work 
+# make things factors though 
+box_plt_dat$cond_type <- as.factor(box_plt_dat$cond_type)
+
+# try adding in the real data 
+# first setup coding 
+df$cond_type <- 0 
+df$cond_type[df$second_half == 0 &
+               df$given_instruction == 0] <- "Baseline"
+df$cond_type[df$second_half == 1 &
+               df$given_instruction == 0] <- "Practice"
+df$cond_type[df$second_half == 0 &
+               df$given_instruction == 1] <- "Instructed"
+df$cond_type[df$second_half == 1 &
+               df$given_instruction == 1] <- "Transfer"
+
+box_dat_real <- df %>%
+  group_by(participant, cond_type) %>% 
+  summarise(samples = mean(correct))
+
+
+# do some checking for mapping of participants 
+# temp_sim <- box_plt_dat %>%
+#   group_by(participant, cond_type) %>%
+#   summarise(accuracy = mean(samples))
+# 
+# temp_real <- box_dat_real
+# 
+# test1 <- merge(temp_real, temp_sim)
+# 
+# # looks likes a poor match, try reordering post data 
+# temp_sim$participant <- rep(sequence, each = 4)
+# 
+# test2 <- merge(temp_real, temp_sim)
+
+# sort out participant order in sim data 
+box_plt_dat$participant <- rep(sequence, each = 4000)
+
+
+# box_dat_real$participant <- rep(sequence, each = 2)
+
+# plot
+plt_box <- ggplot(box_plt_dat, aes(cond_type, samples,
+                                   fill = cond_type))
+plt_box <- plt_box + theme_bw() 
+plt_box <- plt_box + geom_boxplot()
+plt_box <- plt_box + theme(legend.position = "bottom",
+                           strip.background = element_blank(),
+                           strip.text.x = element_blank(),
+                           axis.text.x = element_blank(),
+                           axis.ticks.x = element_blank())
+plt_box <- plt_box + facet_wrap(~participant, ncol = 6)
+plt_box <- plt_box + geom_point(data = box_dat_real, 
+                                aes(cond_type, samples),
+                                size = 2)
+plt_box <- plt_box + geom_point(data = box_dat_real,
+                                aes(cond_type, samples,
+                                    colour = cond_type),
+                                size = 1)
+plt_box
+
+
+
 
 
