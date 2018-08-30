@@ -4,6 +4,9 @@ library(tidyverse)
 library(rethinking)
 library(viridisLite)
 
+# rethinking options 
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores())
 
 # fit_model <- function(df) {
 #   m <- map2stan( 
@@ -103,8 +106,7 @@ df$given_instruction <- as.numeric(df$condition == "Instructions")
 
 
 
-#%%%%%%%%%%%%%%%%%% now do all sessions together
-
+#### now do all sessions together ####
 df$second_half <- as.numeric(df$block > 4)
 
 # save this 
@@ -121,7 +123,8 @@ m1 <- map2stan(
     halfbyinst ~ dnorm(0, 1),
     a_p[participant] ~ dnorm(0, sigma_p),
     sigma_p ~ dcauchy(0, 1)),
-  data = df)
+  data = df,
+  iter = 2000, warmup = 1000, chains = 3, cores = 3)
 
 # save this model 
 save(m1, file = "scratch/models/m1_rand_intercept")
