@@ -153,7 +153,7 @@ plt <- plt + theme_bw()  + scale_fill_viridis_d()
 plt <- plt + scale_x_continuous(
   name = "probablity of correctly responding to target", limits = c(0.5,1), expand = c(0,0))
 
-ggsave("scratch/joint_model.pdf")
+ggsave("scratch/plots/joint_model.png")
 
 
 #  calculate HDPI
