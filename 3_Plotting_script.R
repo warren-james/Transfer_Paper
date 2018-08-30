@@ -120,6 +120,29 @@ for(p in unique(df_part2$participant)){
 rm(fl,p, s, seps, switch)
 
 #### Plot: Dot plot ####
+# #### THIS IS BROKEN AT THE MOMENT ####
+# # sort labelling of condition and order 
+# # side_fix_dat first 
+# side_fix_dat$condition[side_fix_dat$condition == "No_instructions"] <- "Unprimed"
+# side_fix_dat$condition[side_fix_dat$condition == "Instructions"] <- "Primed"
+# 
+# # switch lines 
+# # make factor first 
+# switch_line$condition <- as.factor(switch_line$condition)
+# switch_line$condition2[switch_line$condition == "No_instructions"] <- "Unprimed"
+# switch_line$condition2[switch_line$condition == "Instructions"] <- "Primed"
+# 
+# switch_line$condition <- switch_line$condition2
+# 
+# # sort ordering
+# side_fix_dat$condition <- as.factor(side_fix_dat$condition)
+# side_fix_dat$condition <- factor(side_fix_dat$condition,
+#                                  levels(side_fix_dat$condition)[c(2,1)])
+# switch_line$condition <- factor(switch_line$condition,
+#                                 levels(switch_line$condition)[c(2,1)])
+
+
+# plt
 dot_plt <- ggplot(side_fix_dat, aes(get_VisDegs(separation/ppcm, Screen_dist),
                                     prop_fixated,
                                     colour = condition))
