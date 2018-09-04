@@ -136,12 +136,29 @@ agdat <- summarise(temp, meanAcc = mean(accuracy))
 rm(temp)
 
 # make plot
-plt = ggplot(df_nar, aes(x=separation, y=accuracy)) 
-plt = plt + stat_smooth(colour="black", method=glm, method.args = list(family=binomial(mafc.probit(2))), se=F, fullrange=TRUE) 
-plt = plt + geom_point(data=agdat, aes(x=separation, y=meanAcc))
-plt = plt + facet_wrap(~participant) + theme_minimal()
-plt = plt + scale_y_continuous(name="proportion correct", breaks=c(0.25, 0.5, 0.75, 1.0))
-plt = plt + scale_x_continuous(name="separation (pixels for now)", limits=c(0,450), breaks=c(0,150,300,450))
+plt <- ggplot(df_nar, aes(get_VisDegs(separation/ppcm, Screen_dist),
+                         accuracy)) 
+plt <- plt + theme_bw()
+plt <- plt + stat_smooth(colour="black",
+                        method=glm,
+                        method.args = list(family=binomial(mafc.probit(2))),
+                        se=F,
+                        fullrange=TRUE) 
+plt <- plt + geom_point(data=agdat, aes(get_VisDegs(separation/ppcm, Screen_dist),
+                                       meanAcc))
+plt <- plt + theme(strip.text.x = element_blank())
+plt <- plt + facet_wrap(~participant)
+plt <- plt + scale_x_continuous(breaks = c(0, 5, 10, 15))
+plt <- plt + scale_y_continuous(breaks = c(.25, .5, .75, 1))
+# plt = plt + scale_y_continuous(name="proportion correct", breaks=c(0.25, 0.5, 0.75, 1.0))
+# plt = plt + scale_x_continuous(name="separation (pixels for now)", limits=c(0,450), breaks=c(0,150,300,450))
+plt$labels$x <- "Delta (Visual Degrees)"
+plt$labels$y <- "Accuracy"
+plt
+
+# save 
+ggsave("scratch/plots/Part_1_plots.png")
+
 # ggsave("scratch/plots/Part_1_Plots.pdf", height = 10, width = 10)
 # or as png?
 # ggsave("scratch/plots/Part_1_Plots.png")
@@ -251,11 +268,11 @@ switch_df$act_acc[switch_df$centre == 0] <- 0.75
 
 #### make column for optimal accuracy ####
 # first make opt fixation location
-switch_df$opt_fix <- 0
+switch_df$opt_fix <- 1
 # # this way gives some people opt accuracy below 0.75, may need to redefine their accuracy?
 # switch_df$opt_fix[switch_df$separation > switch_df$switch_point] <- 1
 # This way should work
-switch_df$opt_fix[switch_df$accuracy > 0.75] <- 1
+switch_df$opt_fix[switch_df$accuracy < 0.75] <- 0
 
 
 # now give accuracy if they had followed this strategy
@@ -270,6 +287,21 @@ switch_df$exp_acc[switch_df$centre == 0] <- 0.75
 # first, set first half vs second half 
 switch_df$half[switch_df$block < 5] <- "first"
 switch_df$half[switch_df$block > 4] <- "second"
+
+# check this 
+# temp <- switch_df %>%
+#   group_by(participant, half, condition, separation) %>%
+#   summarise(Optimal = mean(opt_acc),
+#             opt_fix = mean(opt_fix),
+#             Expected = mean(exp_acc),
+#             Actual = mean(correct),
+#             measured_acc = mean(accuracy))
+# 
+# temp$diff <- temp$Optimal - temp$Expected
+
+#### NB: Differences in switch point calculation ####
+# This means one or two participants will look like they didn't perform optimally
+# though we could just use real accuracy as well when plotting... allow for jitter etc.
 
 # save this 
 save(switch_df, file = "scratch/switch_df")

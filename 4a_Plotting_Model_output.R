@@ -61,12 +61,12 @@ plt_dat <- df %>%
 # just half
 # plt <- ggplot()
 # plt <- plt + theme_bw()
-# plt <- plt + geom_ribbon(data = model_lines, 
+# plt <- plt + geom_ribbon(data = model_lines,
 #                          aes(x = second_half, ymin = lower, ymax = upper),
 #                          alpha = 0.5)
-# plt <- plt + geom_point(data = plt_dat, 
+# plt <- plt + geom_point(data = plt_dat,
 #                         aes(x = second_half, y = accuracy),
-#                         shape = 3, alpha = 0.8, show.legend = FALSE) 
+#                         shape = 3, alpha = 0.8, show.legend = FALSE)
 # plt <- plt + facet_wrap(~participant)
 # plt
 
@@ -144,12 +144,14 @@ box_dat_real <- df %>%
 # 
 # test2 <- merge(temp_real, temp_sim)
 
-# sort out participant order in sim data 
-box_plt_dat$participant <- rep(sequence, each = 4000)
+# sort out participant order in sim data
+num_reps <- length(post$a_p[,1])*4
+box_plt_dat$participant <- rep(sequence, each = num_reps)
 
 
 # box_dat_real$participant <- rep(sequence, each = 2)
 
+#### PLOTS: Makes box plot ####
 # plot
 plt_box <- ggplot(box_plt_dat, aes(cond_type, samples,
                                    fill = cond_type))
@@ -159,7 +161,8 @@ plt_box <- plt_box + theme(legend.position = "bottom",
                            strip.background = element_blank(),
                            strip.text.x = element_blank(),
                            axis.text.x = element_blank(),
-                           axis.ticks.x = element_blank())
+                           axis.ticks.x = element_blank(),
+                           axis.title.x = element_blank())
 plt_box <- plt_box + facet_wrap(~participant, ncol = 6)
 plt_box <- plt_box + geom_point(data = box_dat_real, 
                                 aes(cond_type, samples),
@@ -168,8 +171,16 @@ plt_box <- plt_box + geom_point(data = box_dat_real,
                                 aes(cond_type, samples,
                                     colour = cond_type),
                                 size = 1)
-plt_box
+plt_box$labels$y <- "Accuracy"
+plt_box$labels$colour <- "Condition"
+plt_box$labels$fill <- "Condition"
+plt_box 
 
+# save
+ggsave("scratch/plots/Bayes_box_plots.png",
+       height = 12,
+       width = 16,
+       units = "cm")
 
 
 
