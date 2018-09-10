@@ -32,6 +32,18 @@ load("scratch/Elle_fix_data")
 Acc_Actual <- Elle_accuracy_data[Elle_accuracy_data$acc_type == "Actual",]
 Acc_Optimal <- Elle_accuracy_data[Elle_accuracy_data$acc_type == "Optimal",]
 
+# need to reorder the levels 
+Acc_Actual$condition <- as.factor(Acc_Actual$condition)
+Acc_Optimal$condition <- as.factor(Acc_Optimal$condition)
+
+# reorder them 
+levels(Acc_Actual$condition) <- factor(Acc_Actual$condition, 
+                                       levels(Acc_Actual$condition)[c(2,1)])
+
+levels(Acc_Optimal$condition) <- factor(Acc_Optimal$condition, 
+                                        levels(Acc_Optimal$condition)[c(2,1)])
+
+# plot
 plt <- ggplot(Acc_Actual[Acc_Actual$half == "second",],
               aes(offset_from_sp,
                   Accuracy))
@@ -44,7 +56,7 @@ plt <- plt + geom_line(data = Acc_Optimal,
 plt <- plt + theme(strip.background = element_blank(),
                    strip.text.x = element_blank(),
                    panel.border = element_blank())
-plt <- plt + facet_wrap(~participant)
+plt <- plt + facet_wrap(~condition + participant)
 plt$labels$x <- "Offset from Switch Point (Visual Degrees)"
 plt
 # # save 

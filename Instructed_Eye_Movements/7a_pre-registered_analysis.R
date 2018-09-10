@@ -134,6 +134,9 @@ levels(plt_data$condition) <- c("Primed", "Control")
 plt_data$condition <- factor(plt_data$condition,
                              levels(plt_data$condition)[c(2,1)])
 
+# can use Expected instead of Actual... but due to a slight difference
+# in accuracy calculations for the switch points, this would
+# make it look like some participants weren't as good as optimal...
 # plot
 plt <- ggplot(plt_data, aes(Optimal, Actual,
                             colour = condition))
@@ -143,7 +146,7 @@ plt <- plt + scale_y_continuous(limits = c(0.6, 0.9)) +
 plt <- plt + geom_abline(intercept = 0, slope = 1)
 plt <- plt + geom_point()
 plt <- plt + facet_wrap(~ half)
-# plt <- plt + theme(legend.position = "bottom")
+# plt <- plt + theme(legend.position = "none")
 plt$labels$colour <- "Condition"
 plt$labels$x <- "Optimal Accuracy"
 plt$labels$y <- "Actual Accuracy"
@@ -183,6 +186,8 @@ plt2 <- ggplot(plt2_data, aes(get_VisDegs(separation/ppcm, Screen_dist),
 plt2 <- plt2 + theme_bw()
 plt2 <- plt2 + geom_point()
 plt2 <- plt2 + geom_line(aes(group = participant))
+plt2 <- plt2 + facet_wrap(~condition)
+plt2 <- plt2 + theme(legend.position = "none")
 plt2$labels$y <- "Proportion of Fixations to a side box"
 plt2$labels$x <- "Delta (Visual Degrees)"
 plt2$labels$colour <- "Condtion"

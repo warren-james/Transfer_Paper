@@ -63,24 +63,22 @@ plt_dat <- rbind(centre_prop, side_prop)
 rm(centre_prop, side_prop)
 
 # need to add switch point data back in 
-temp <- group_by(df_part2, participant, condition)
-switch_points <- summarise(temp, switch_point = unique(switch_point))
-
-# tidy 
-rm(temp)
+switch_points <- df_part2 %>%
+  group_by(participant, condition) %>%
+  summarise(switch_point = unique(switch_point))
 
 # now to make the plots 
-prop_plt <- ggplot(data = plt_dat, 
-                   aes(x = separation,
-                       y = prop_fixated))
-prop_plt <- prop_plt + geom_area(aes(colour = box,
-                                     fill = box),
-                                 position = "stack")
-prop_plt <- prop_plt + geom_vline(data = switch_points,
-                                  aes(xintercept = as.numeric(switch_point)), 
-                                  linetype = "dashed")
-prop_plt <- prop_plt + facet_wrap(~condition + participant)
-prop_plt
+# prop_plt <- ggplot(data = plt_dat, 
+#                    aes(x = separation,
+#                        y = prop_fixated))
+# prop_plt <- prop_plt + geom_area(aes(colour = box,
+#                                      fill = box),
+#                                  position = "stack")
+# prop_plt <- prop_plt + geom_vline(data = switch_points,
+#                                   aes(xintercept = as.numeric(switch_point)), 
+#                                   linetype = "dashed")
+# prop_plt <- prop_plt + facet_wrap(~condition + participant)
+# prop_plt
 
 # save plot 
 # ggsave("scratch/plots/proportions_plot.pdf", width = 10, height = 10)
@@ -96,6 +94,8 @@ switch_line <- tibble(participant = character(),
                       separation = numeric(),
                       Fixated_box = numeric())
 
+#### REALLY SLOW ####
+# Is there a quicker way to do this?
 # create the lines
 for(p in unique(df_part2$participant)){
   switch <- unique(switch_points$switch_point[switch_points$participant == p])
@@ -133,6 +133,8 @@ side_fix_dat$condition <- factor(side_fix_dat$condition,
 # same for switch_line
 levels(switch_line$condition) <- c("Unprimed", "Primed")
 
+# might not be needed... but it looks nice...
+# maybe supplementary? Can't remember
 # plt
 dot_plt <- ggplot(side_fix_dat, aes(get_VisDegs(separation/ppcm, Screen_dist),
                                     prop_fixated,
@@ -157,7 +159,7 @@ dot_plt$labels$colour <- "Condition"
 dot_plt
 
 # save 
-ggsave("scratch/plots/Part2_dots_wcolour.png")
+# ggsave("scratch/plots/Part2_dots_wcolour.png")
 
 # tidy 
 rm(plt_dat, side_fix_dat)
@@ -173,28 +175,36 @@ side_prop <- switch_df %>%
 
 # sort out line(s)
 # setup separations
-seps <- seq(min(side_prop$separation), max(side_prop$separation), 0.5)
+# seps <- seq(min(side_prop$separation), max(side_prop$separation), 0.5)
+# 
+# # setup new dataframe
+# opt_fixations <- tibble(participant = character(),
+#                         condition = character(),
+#                         separation = numeric(),
+#                         fix_location = numeric())
+# 
+# for(i in unique(switch_df$participant)){
+#   d <- switch_df[switch_df$participant == i,]
+#   for(x in seps){
+#     if(x < as.numeric(unique(d$switch_point))){
+#       fl <- 0
+#     } else if(x > as.numeric(unique(d$switch_point))){
+#       fl <- 1
+#     }
+#     opt_fixations <- rbind(opt_fixations, data.frame(participant = i,
+#                                                      condition = unique(d$condition),
+#                                                      separation = x,
+#                                                      fix_locations = fl))
+#   }
+# }
 
-# setup new dataframe
-opt_fixations <- tibble(participant = character(),
-                        condition = character(),
-                        separation = numeric(),
-                        fix_location = numeric())
+# sort side_prop condition labels 
+side_prop$condition <- as.factor(side_prop$condition)
+levels(side_prop$condition) <- c("Primed", "Unprimed")
 
-for(i in unique(switch_df$participant)){
-  d <- switch_df[switch_df$participant == i,]
-  for(x in seps){
-    if(x < as.numeric(unique(d$switch_point))){
-      fl <- 0
-    } else if(x > as.numeric(unique(d$switch_point))){
-      fl <- 1
-    }
-    opt_fixations <- rbind(opt_fixations, data.frame(participant = i,
-                                                     condition = unique(d$condition),
-                                                     separation = x,
-                                                     fix_locations = fl))
-  }
-}
+# reorder these levels 
+side_prop$condition <- factor(side_prop$condition,
+                              levels(side_prop$condition)[c(2,1)]) 
 
 # make plot 
 dot_plt <- ggplot(side_prop, aes(get_VisDegs(separation/ppcm, Screen_dist), 
@@ -205,10 +215,10 @@ dot_plt <- dot_plt + geom_point(aes(shape = half,
                      scale_shape_manual(values=c(3,4))
 dot_plt <- dot_plt + theme_bw()
 dot_plt <- dot_plt + facet_wrap(~condition + participant, ncol = 6)
-dot_plt <- dot_plt + geom_path(data = opt_fixations,
+dot_plt <- dot_plt + geom_path(data = switch_line,
                                colour = "blue",
                                aes(get_VisDegs(separation/ppcm, Screen_dist),
-                                   fix_locations),
+                                   Fixated_box),
                                size = 0.15)
 dot_plt <- dot_plt + theme(strip.background = element_blank(),
                            strip.text.x = element_blank())
@@ -216,55 +226,11 @@ dot_plt$labels$x <- "Delta (in Visual Degrees)"
 dot_plt$labels$y <- "Proportion of Fixations to the side boxes"
 dot_plt$labels$shape <- "Half"
 dot_plt$labels$colour <- "Half"
-
+dot_plt
 
 # save this 
 ggsave("scratch/plots/Part_2_plots.pdf")
 
-
-#### CHECK: just part 3 participants ####
-# df_part3 <- switch_df[switch_df$part == 3,]
-# 
-# #### make plots ####
-# # setup data.frame/tibble for plots
-# # centre proportions
-# temp <- group_by(df_part3, participant,separation,condition)
-# centre_prop <- summarise(temp, prop_fixated = mean(centre))
-# centre_prop$box <- "centre"
-# 
-# # side proportions
-# side_prop <- summarise(temp, prop_fixated = 1 - mean(centre))
-# side_prop$box <- "side"
-# 
-# # tidy
-# rm(temp)
-# 
-# # merge data
-# plt_dat3 <- rbind(centre_prop, side_prop)
-# 
-# # tidy 
-# rm(centre_prop, side_prop)
-# 
-# # need to add switch point data back in 
-# temp <- group_by(df_part3, participant, condition)
-# switch_points <- summarise(temp, switch_point = unique(switch_point))
-# 
-# # tidy 
-# rm(temp)
-# 
-# # now to make the plots 
-# prop_plt <- ggplot(data = plt_dat3, 
-#                    aes(x = separation,
-#                        y = prop_fixated))
-# prop_plt <- prop_plt + geom_area(aes(colour = box,
-#                                      fill = box),
-#                                  position = "stack")
-# prop_plt <- prop_plt + geom_vline(data = switch_points,
-#                                   aes(xintercept = as.numeric(switch_point)), 
-#                                   linetype = "dashed")
-# prop_plt <- prop_plt + facet_wrap(~condition + participant)
-# prop_plt
-# Running the part above shows the code is fine
 
 #### boxplots of accuracy ####
 # make boxplot data

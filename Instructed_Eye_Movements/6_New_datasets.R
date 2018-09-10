@@ -128,12 +128,11 @@ rm(sep)
 #### Part 1 plots #### 
 # remove NA's 
 df_nar <- df[complete.cases(df),]
-# summary data for mean accuracy 
-temp <- group_by(df_nar, participant, separation)
-agdat <- summarise(temp, meanAcc = mean(accuracy))
 
-# tidy 
-rm(temp)
+# summary data for mean accuracy 
+agdat <- df_nar %>%
+  group_by(participant, separation) %>%
+  summarise(meanAcc = mean(accuracy))
 
 # make plot
 plt <- ggplot(df_nar, aes(get_VisDegs(separation/ppcm, Screen_dist),
@@ -150,18 +149,12 @@ plt <- plt + theme(strip.text.x = element_blank())
 plt <- plt + facet_wrap(~participant)
 plt <- plt + scale_x_continuous(breaks = c(0, 5, 10, 15))
 plt <- plt + scale_y_continuous(breaks = c(.25, .5, .75, 1))
-# plt = plt + scale_y_continuous(name="proportion correct", breaks=c(0.25, 0.5, 0.75, 1.0))
-# plt = plt + scale_x_continuous(name="separation (pixels for now)", limits=c(0,450), breaks=c(0,150,300,450))
 plt$labels$x <- "Delta (Visual Degrees)"
 plt$labels$y <- "Accuracy"
 plt
 
 # save 
 ggsave("scratch/plots/Part_1_plots.png")
-
-# ggsave("scratch/plots/Part_1_Plots.pdf", height = 10, width = 10)
-# or as png?
-# ggsave("scratch/plots/Part_1_Plots.png")
 
 # tidy 
 rm(plt, agdat)
@@ -189,17 +182,6 @@ switch_df <- select(switch_df,
 # probably want to round switch_point 
 switch_df$switch_point <- as.numeric(switch_df$switch_point)
 switch_df$switch_point <- round(switch_df$switch_point)
-
-# check switch points against accuracy 
-temp <- group_by(switch_df, participant, separation)
-temp <- summarise(temp, mean_acc = mean(accuracy))
-
-switch_points <- group_by(switch_df, participant)
-switch_points <- summarise(switch_points, switch_point = unique(switch_point))
-temp <- merge(temp, switch_points)
-
-# tidy 
-rm(temp)
 
 # NB: as.factor() then as.numeric() will produce a number for each level
 #     Use this to transform data so it's standardised accross participants
@@ -269,9 +251,6 @@ switch_df$act_acc[switch_df$centre == 0] <- 0.75
 #### make column for optimal accuracy ####
 # first make opt fixation location
 switch_df$opt_fix <- 1
-# # this way gives some people opt accuracy below 0.75, may need to redefine their accuracy?
-# switch_df$opt_fix[switch_df$separation > switch_df$switch_point] <- 1
-# This way should work
 switch_df$opt_fix[switch_df$accuracy < 0.75] <- 0
 
 
@@ -288,17 +267,6 @@ switch_df$exp_acc[switch_df$centre == 0] <- 0.75
 switch_df$half[switch_df$block < 5] <- "first"
 switch_df$half[switch_df$block > 4] <- "second"
 
-# check this 
-# temp <- switch_df %>%
-#   group_by(participant, half, condition, separation) %>%
-#   summarise(Optimal = mean(opt_acc),
-#             opt_fix = mean(opt_fix),
-#             Expected = mean(exp_acc),
-#             Actual = mean(correct),
-#             measured_acc = mean(accuracy))
-# 
-# temp$diff <- temp$Optimal - temp$Expected
-
 #### NB: Differences in switch point calculation ####
 # This means one or two participants will look like they didn't perform optimally
 # though we could just use real accuracy as well when plotting... allow for jitter etc.
@@ -308,8 +276,9 @@ save(switch_df, file = "scratch/switch_df")
 
 #### Accuracy: Actual ####
 # sort out actual accuracy 
-temp <- group_by(switch_df, participant, half, as_numbers, as_factors, offset_from_sp, condition)
-Act_accuracy <- summarise(temp, mean_acc = mean(correct))
+Act_accuracy <- switch_df %>%
+  group_by(participant, half, as_numbers, as_factors, offset_from_sp, condition) %>%
+  summarise(mean_acc = mean(correct))
 
 # define type of accuracy 
 Act_accuracy$acc_type <- "Actual"
@@ -327,7 +296,9 @@ colnames(Act_accuracy) <- c("participant",
 
 #### Accuracy: Optimal ####
 # Add in optimal accuracy 
-Opt_accuracy <- summarise(temp, mean_opt = mean(opt_acc))
+Opt_accuracy <- switch_df %>%
+  group_by(participant, half, as_numbers, as_factors, offset_from_sp, condition) %>%
+  summarise(mean_opt = mean(opt_acc))
 
 # define type of accuracy 
 Opt_accuracy$acc_type <- "Optimal"
@@ -344,7 +315,9 @@ colnames(Opt_accuracy) <- c("participant",
 
 #### Accuracy: Expected Actual ####
 # sort expected actual accuracy 
-Exp_accuracy <- summarise(temp, mean_exp = mean(exp_acc))
+Exp_accuracy <- switch_df %>%
+  group_by(participant, half, as_numbers, as_factors, offset_from_sp, condition) %>%
+  summarise(mean_exp = mean(exp_acc))
 
 # define type of accuracy 
 Exp_accuracy$acc_type <- "Expected"
@@ -358,11 +331,6 @@ colnames(Exp_accuracy) <- c("participant",
                             "condition",
                             "Accuracy",
                             "acc_type")
-
-# tidy 
-rm(temp)
-
-#
 
 #### Accuracy: Combine these? ####
 Elle_accuracy_data <- rbind(Exp_accuracy, Opt_accuracy, Act_accuracy)
@@ -394,74 +362,9 @@ Accuracy_vdegs <- rbind(Act_Acc_vdegs, Opt_Acc_vdegs)
 write.table(Accuracy_vdegs, file = "scratch/Accuracy_Vdegs.txt", row.names = F, sep = "\t")
 
 
-#### NEED TO FIX BELOW THIS POINT ####
-
-# reorder 
-# Elle_accuracy_data <- select(Elle_accuracy_data, 
-#                              participant,
-#                              condition,
-#                              half,
-#                              standard_sep,
-#                              acc_type,
-#                              Accuracy)
-
-#### Accuracy: reshaping data ####
-# for all the data together
-# Elle_accuracy_data_wide <- dcast(Elle_accuracy_data,
-#                                  participant + 
-#                                    condition ~
-#                                    half +
-#                                    standard_sep +
-#                                    acc_type,
-#                                  value.var = "Accuracy")
-
-# each individually 
-# Actual
-# Act_accuracy_wide <- dcast(Act_accuracy,
-#                            participant + 
-#                              condition ~
-#                              half +
-#                              standard_sep +
-#                              acc_type,
-#                            value.var = "Accuracy")
-
-# Optimal
-# Opt_accuracy_wide <- dcast(Opt_accuracy,
-#                            participant + 
-#                              condition ~
-#                              half +
-#                              standard_sep +
-#                              acc_type,
-#                            value.var = "Accuracy")
-
-# Expected 
-# Exp_accuracy_wide <- dcast(Exp_accuracy,
-#                            participant + 
-#                              condition ~
-#                              half +
-#                              standard_sep +
-#                              acc_type,
-#                            value.var = "Accuracy")
-
-# save txt files to be imported to excel 
-# Act
-# write.table(Act_accuracy_wide, "Elle_data/Actual_Accuracy.txt", row.names = FALSE, sep = "\t")
-# 
-# # Exp
-# write.table(Exp_accuracy_wide, "Elle_data/Expected_Accuracy.txt", row.names = FALSE, sep = "\t")
-# 
-# # Opt
-# write.table(Opt_accuracy_wide, "Elle_data/Optimal_Accuracy.txt", row.names = FALSE, sep = "\t")
-
-# # tidy
-# rm(Act_accuracy,
-#    Act_accuracy_wide,
-#    Elle_accuracy_data,
-#    Elle_accuracy_data_wide,
-#    Exp_accuracy,
-#    Exp_accuracy_wide,
-#    Opt_accuracy,
-#    Opt_accuracy_wide)
+#### NB: Do we need this? ####
+# Do we need the patterns of standing position for each strategy?
+# if so, I'll fix it, if not, just delete
  
 #### Fixation pos propportions ####
 # only need optimal and actual, should be the same as above pretty much

@@ -57,31 +57,6 @@ plt_dat <- df %>%
   group_by(participant, given_instruction, second_half) %>%
   summarise(accuracy = mean(correct))
 
-# now make a plot this 
-# just half
-# plt <- ggplot()
-# plt <- plt + theme_bw()
-# plt <- plt + geom_ribbon(data = model_lines,
-#                          aes(x = second_half, ymin = lower, ymax = upper),
-#                          alpha = 0.5)
-# plt <- plt + geom_point(data = plt_dat,
-#                         aes(x = second_half, y = accuracy),
-#                         shape = 3, alpha = 0.8, show.legend = FALSE)
-# plt <- plt + facet_wrap(~participant)
-# plt
-
-# now under instructions 
-# plt <- ggplot()
-# plt <- plt + theme_bw()
-# plt <- plt + geom_ribbon(data = model_lines,
-#                          aes(given_instruction, ymin = lower, ymax = upper),
-#                          alpha = 0.5)
-# plt <- plt + geom_point(data = plt_dat, 
-#                         aes(given_instruction, accuracy, colour = second_half),
-#                         shape = 3, alpha = 0.8, show.legend = T)
-# plt <- plt + theme(legend.position = "bottom")
-# plt <- plt + facet_wrap(~participant)
-# plt
 
 #### how about we try some box plots ####
 box_plt_dat <- tibble(participant = numeric(),
@@ -129,20 +104,6 @@ box_dat_real <- df %>%
   group_by(participant, cond_type) %>% 
   summarise(samples = mean(correct))
 
-
-# do some checking for mapping of participants 
-# temp_sim <- box_plt_dat %>%
-#   group_by(participant, cond_type) %>%
-#   summarise(accuracy = mean(samples))
-# 
-# temp_real <- box_dat_real
-# 
-# test1 <- merge(temp_real, temp_sim)
-# 
-# # looks likes a poor match, try reordering post data 
-# temp_sim$participant <- rep(sequence, each = 4)
-# 
-# test2 <- merge(temp_real, temp_sim)
 
 # sort out participant order in sim data
 num_reps <- length(post$a_p[,1])*4
