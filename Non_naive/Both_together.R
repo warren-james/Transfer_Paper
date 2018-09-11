@@ -7,7 +7,7 @@ library(gridExtra)
 
 #### Any functions ####
 # get visual degrees
-get_VisDegs <- function(separationc,distance){
+get_VisDegs <- function(separation,distance){
   (2*atan2(separation,(2*distance)))*(180/pi)
 }
 
@@ -37,51 +37,41 @@ load("Throwing/scratch/df_part2")
 
 #### PLOTS ####
 #### PLOTS: DETECTION TASK ####
-dot_plt <- ggplot(side_fixations, aes(get_VisDegs(separation/ppcm, Screen_dist), 
-                                      prop_fixated))
-dot_plt <- dot_plt + geom_point()
+side_fixations <- mutate(side_fixations, vis_deg = get_VisDegs(separation/ppcm, Screen_dist))
+
+dot_plt <- ggplot(side_fixations, aes(vis_deg, prop_fixated))
 dot_plt <- dot_plt + theme_bw()
-dot_plt <- dot_plt + facet_wrap(~participant)
+dot_plt <- dot_plt + facet_wrap(~participant, nrow = 1)
 dot_plt <- dot_plt + geom_path(data = opt_fixations,
-                               colour = "blue",
+                               colour = "darkblue",
                                aes(get_VisDegs(separation/ppcm, Screen_dist),
                                    fix_locations),
-                               size = 0.15)
+                               size = 0.5)
+dot_plt <- dot_plt + geom_point()
 dot_plt <- dot_plt + theme(strip.background = element_blank(),
                            strip.text.x = element_blank())
-dot_plt$labels$x <- "Delta (in Visual Degrees)"
-dot_plt$labels$y <- "Proportion of Fixations to the side boxes"
-dot_plt
+dot_plt <- dot_plt + xlab("delta (in visual degrees)")
+dot_plt <- dot_plt + ylab("proportion of fixations \n to the side boxes")
+ggsave("detection_task.pdf", width = 8, height = 2.5)
+ggsave("detection_task.png", width = 8, height = 2.5)
 
 
 #### PLOTS: THROWING TASK ####
 plt <- ggplot(df_part2, aes(Hoop_Pos*slab_size, 
                             Abs_Pos))
 #plt <- plt + geom_jitter(size = 1.2)
-plt <- plt + geom_point(alpha = 1/15)
 plt <- plt + geom_path(data = Opt_Pos,
-                       colour = "blue",
+                       colour = "darkblue",
                        aes(Slab*slab_size, 
                            Opt_Pos),
-                       size = 0.2)
-plt <- plt + scale_x_continuous(limits = c(0,13))
+                       size = 0.5)
+plt <- plt + geom_point(alpha = 1/15)
+plt <- plt + scale_x_continuous("delta (metres)", limits = c(0,13))
+plt <- plt + ylab("normalised \n standing position")
 plt <- plt + theme_bw()
 plt <- plt + theme(strip.background = element_blank(),
                    strip.text.x = element_blank(),
                    text = element_text(size = 12))
-plt <- plt + facet_wrap(~Participant)
-plt$labels$x <- "Delta (metres)"
-plt$labels$y <- "Normalised Standing Position"
-plt
-
-#### PLOTS: COMBINE ####
-grid.arrange(dot_plt, plt, ncol = 2)
-
-# need to save manually...
-# haven't figured out the command for that yet
-
-
-
-
-
-
+plt <- plt + facet_wrap(~Participant, nrow = 1)
+ggsave("throwing_task.pdf", width = 8, height = 2.5)
+ggsave("throwing_task.png", width = 8, height = 2.5)

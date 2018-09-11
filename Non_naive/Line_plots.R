@@ -80,9 +80,9 @@ plt <- plt + geom_line(aes(group = Participant))
 #                    strip.text.x = element_blank(),
 #                    text = element_text(size = 10))
 # plt <- plt + scale_y_continuous(limits = c(.5, 1))
-plt <- plt + facet_wrap(~Task, scales = "free_y")
+plt <- plt + facet_wrap(~Task, scales = "free_y", ncol = 1)
 plt$labels$x <- "Accuracy Type"
-plt
+ggsave("Extra_plots/line_plot.png", width = 3, height = 5)
 
 # save this 
 # ggsave("Extra_plots/line_plot.png")
