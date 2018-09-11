@@ -7,7 +7,7 @@ library(gridExtra)
 
 #### Any functions ####
 # get visual degrees
-get_VisDegs <- function(separationc,distance){
+get_VisDegs <- function(separation,distance){
   (2*atan2(separation,(2*distance)))*(180/pi)
 }
 
