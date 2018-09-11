@@ -33,7 +33,7 @@ rm(accuracy_data)
 # Detection
 plt_dat_det <- pred_dat_Det %>%
   group_by(participant, acc_type) %>%
-  summarise(Accuracy = mean(Accuracy))
+  summarise(Accuracy = mean(accuracy))
 
 # sort colnames
 colnames(plt_dat_det) <- c("Participant",
@@ -65,7 +65,7 @@ rm(plt_dat_det, plt_dat_Throw, temp, temp1)
 
 # now only keep levels we want 
 plt_dat <- plt_dat[plt_dat$Acc_type == "Optimal" | 
-                     plt_dat$Acc_type == "Expected",]
+                     plt_dat$Acc_type == "Actual",]
 
 plt_dat$Task <- as.factor(plt_dat$Task)
 plt_dat$Task <- factor(plt_dat$Task, levels(plt_dat$Task)[c(2,1)])
@@ -82,6 +82,8 @@ plt <- plt + geom_line(aes(group = Participant))
 # plt <- plt + scale_y_continuous(limits = c(.5, 1))
 plt <- plt + facet_wrap(~Task, scales = "free_y", ncol = 1)
 plt$labels$x <- "Accuracy Type"
+plt
+
 ggsave("Extra_plots/line_plot.png", width = 3, height = 5)
 
 # save this 
@@ -107,8 +109,11 @@ plt_t <- ggplot(plt_dat_Throw, aes(Acc_type, Accuracy))
 plt_t <- plt_t + theme_bw()
 plt_t <- plt_t + geom_point()
 plt_t <- plt_t + geom_line(aes(group = Participant))
-plt_t <- plt_t + scale_y_continuous(limits = c(0,1))
-plt_t <- plt_t + theme(axis.title.x = element_blank())
+plt_t <- plt_t + scale_y_continuous(limits = c(0,1),
+                                    breaks = c(0, .2, .4, .6, .8, 1),
+                                    expand = c(0,0))
+plt_t <- plt_t + theme(axis.title.x = element_blank(),
+                       axis.title.y = element_blank())
 plt_t <- plt_t + facet_wrap(~Task)
 #plt_t$labels$x <- "Accuracy Type"
 
@@ -117,15 +122,17 @@ plt_d <- ggplot(plt_dat_Det, aes(Acc_type, Accuracy))
 plt_d <- plt_d + theme_bw()
 plt_d <- plt_d + geom_point()
 plt_d <- plt_d + geom_line(aes(group = Participant))
-plt_d <- plt_d + scale_y_continuous(limits = c(0.5,1))
+plt_d <- plt_d + scale_y_continuous(limits = c(0.5,1),
+                                    expand = c(0,0))
 plt_d <- plt_d + theme(axis.title.y = element_blank(),
                        axis.title.x = element_blank())
 plt_d <- plt_d + facet_wrap(~Task)
 #plt_d$labels$x <- "Accuracy Type"
 
 # combine these 
-grid.arrange(plt_t, plt_d, nrow = 1,
-             bottom = "Accuracy Type")
+grid.arrange(plt_t, plt_d, nrow = 2,
+             bottom = "Accuracy Type",
+             left = "Accuracy")
 
 # save 
 ggsave("Extra_plots/lines_new_scales.png")

@@ -41,7 +41,7 @@ for (person in people) {
 	optimal_chance <- pmax(centre_chance, side_chance)
 
 	# simulate 100k experiments
-	pred_acc <- replicate(100000, mean(optimal_chance > runif(length(optimal_chance))))
+	pred_acc <- replicate(1000000, mean(optimal_chance > runif(length(optimal_chance))))
 	obs_acc <- mean(dat$correct)
 	print(paste("obs acc of:", round(obs_acc,2), "compared to opt acc of: ", round(mean(pred_acc),2)))
 	print(paste("prob(getting as low, or lower, acc under optimal strat) = ", round(mean(obs_acc  > pred_acc),3) ))
