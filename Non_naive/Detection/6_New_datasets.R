@@ -82,38 +82,36 @@ rm(df)
 # sep <- c(min(df_part2$separation):(2*max(df_part2$separation)))
 
 # data frame for accuracy accross separations
-acc_sep <- tibble(
-  participant = character(),
-  separation = numeric(),
-  accuracy = numeric()
-)
-
-# loop through participants for accuracy over all separations
-for (p in unique(df_part1$participant))
-{
- # general linear model
- ss = df_part1[which(df_part1$participant==p),]
- m = glm(data=ss, accuracy~separation, family=binomial(mafc.probit(2)))
- for(i in 1:640){
-   y = predict(m, data.frame(separation = i), type = "response")
-
-   # add into new data frame
-   acc_sep <- rbind(acc_sep, data.frame(participant = p,
-                                        separation  = i,
-                                        accuracy = y))
- }
-}
-
-# save this 
-save(acc_sep, file = "scratch/acc_sep")
+# acc_sep <- tibble(
+#   participant = character(),
+#   separation = numeric(),
+#   accuracy = numeric()
+# )
+# 
+# # loop through participants for accuracy over all separations
+# for (p in unique(df_part1$participant))
+# {
+#  # general linear model
+#  ss = df_part1[which(df_part1$participant==p),]
+#  m = glm(data=ss, accuracy~separation, family=binomial(mafc.probit(2)))
+#  for(i in 1:640){
+#    y = predict(m, data.frame(separation = i), type = "response")
+# 
+#    # add into new data frame
+#    acc_sep <- rbind(acc_sep, data.frame(participant = p,
+#                                         separation  = i,
+#                                         accuracy = y))
+#  }
+# }
+# 
+# # save this 
+# save(acc_sep, file = "scratch/acc_sep")
 
 # load in the above
-# load("scratch/acc_sep")
+load("scratch/acc_sep")
 
 # tidy 
 # rm(m, ss, i, p, sep, y)
-# tidy if loop not run
-rm(sep)
 
 #### Part 1 plots #### 
 # remove NA's 
@@ -224,90 +222,113 @@ switch_df$exp_acc[switch_df$centre == 0] <- 0.75
 
 #### Accuracy: make new datasets #### 
 # first, set first half vs second half 
-switch_df$half[switch_df$block < 5] <- "first"
-switch_df$half[switch_df$block > 4] <- "second"
+# switch_df$half[switch_df$block < 5] <- "first"
+# switch_df$half[switch_df$block > 4] <- "second"
 
-#### sort for Joespine ####
-switch_df$Vis_Degs <- get_VisDegs(switch_df$separation/ppcm, Screen_dist)
-
-#Actual
-Act_Acc_vdegs <- switch_df %>% 
-  group_by(participant, Vis_Degs) %>% 
-  summarise(mean_acc = mean(correct))
-
-Act_Acc_vdegs$acc_type <- "Actual"
-
-#Optimal 
-Opt_Acc_vdegs <- switch_df %>%
-  group_by(participant, Vis_Degs) %>% 
-  summarise(mean_acc = mean(opt_acc))
-
-Opt_Acc_vdegs$acc_type <- "Optimal"
-
-# combine these 
-Accuracy_vdegs <- rbind(Act_Acc_vdegs, Opt_Acc_vdegs)
-
-# save this 
-write.table(Accuracy_vdegs, file = "scratch/Accuracy_Vdegs_us.txt", row.names = F, sep = "\t")
-
-
-#### Accuracy: Actual ####
-# sort out actual accuracy 
-temp <- group_by(switch_df, participant, half, standard_sep)
-Act_accuracy <- summarise(temp, mean_acc = mean(correct))
-
-# define type of accuracy 
-Act_accuracy$acc_type <- "Actual"
-
-# change column names 
-colnames(Act_accuracy) <- c("participant",
-                            "half",
-                            "standard_sep",
-                            "Accuracy",
-                            "acc_type")
+#### sort for Joespine ###
+# switch_df$Vis_Degs <- get_VisDegs(switch_df$separation/ppcm, Screen_dist)
+# 
+# #Actual
+# Act_Acc_vdegs <- switch_df %>% 
+#   group_by(participant, Vis_Degs) %>% 
+#   summarise(mean_acc = mean(correct))
+# 
+# Act_Acc_vdegs$acc_type <- "Actual"
+# 
+# #Optimal 
+# Opt_Acc_vdegs <- switch_df %>%
+#   group_by(participant, Vis_Degs) %>% 
+#   summarise(mean_acc = mean(opt_acc))
+# 
+# Opt_Acc_vdegs$acc_type <- "Optimal"
+# 
+# # combine these 
+# Accuracy_vdegs <- rbind(Act_Acc_vdegs, Opt_Acc_vdegs)
+# 
+# # save this 
+# write.table(Accuracy_vdegs, file = "scratch/Accuracy_Vdegs_us.txt", row.names = F, sep = "\t")
 
 
-#### Accuracy: Optimal ####
-# Add in optimal accuracy 
-Opt_accuracy <- summarise(temp, mean_opt = mean(opt_acc))
+#### Accuracy: Actual ###
+# # sort out actual accuracy 
+# temp <- group_by(switch_df, participant, half, standard_sep)
+# Act_accuracy <- summarise(temp, mean_acc = mean(correct))
+# 
+# # define type of accuracy 
+# Act_accuracy$acc_type <- "Actual"
+# 
+# # change column names 
+# colnames(Act_accuracy) <- c("participant",
+#                             "half",
+#                             "standard_sep",
+#                             "Accuracy",
+#                             "acc_type")
 
-# define type of accuracy 
-Opt_accuracy$acc_type <- "Optimal"
 
-# change column names 
-colnames(Opt_accuracy) <- c("participant",
-                            "half",
-                            "standard_sep",
-                            "Accuracy",
-                            "acc_type")
+#### Accuracy: Optimal ###
+# # Add in optimal accuracy 
+# Opt_accuracy <- summarise(temp, mean_opt = mean(opt_acc))
+# 
+# # define type of accuracy 
+# Opt_accuracy$acc_type <- "Optimal"
+# 
+# # change column names 
+# colnames(Opt_accuracy) <- c("participant",
+#                             "half",
+#                             "standard_sep",
+#                             "Accuracy",
+#                             "acc_type")
 
-#### Accuracy: Expected Actual ####
-# sort expected actual accuracy 
-Exp_accuracy <- summarise(temp, mean_exp = mean(exp_acc))
+#### Accuracy: Expected Actual ###
+# # sort expected actual accuracy 
+# Exp_accuracy <- summarise(temp, mean_exp = mean(exp_acc))
+# 
+# # define type of accuracy 
+# Exp_accuracy$acc_type <- "Expected"
+# 
+# # change column names 
+# colnames(Exp_accuracy) <- c("participant",
+#                             "half",
+#                             "standard_sep",
+#                             "Accuracy",
+#                             "acc_type")
+# 
+# # tidy 
+# rm(temp)
 
-# define type of accuracy 
-Exp_accuracy$acc_type <- "Expected"
+#### Accuracy: Combine these? ###
+# accuracy_data <- rbind(Exp_accuracy, Opt_accuracy, Act_accuracy)
+# 
+# # reorder 
+# accuracy_data <- select(accuracy_data,
+#                         participant,
+#                         half,
+#                         standard_sep,
+#                         acc_type,
+#                         Accuracy)
 
-# change column names 
-colnames(Exp_accuracy) <- c("participant",
-                            "half",
-                            "standard_sep",
-                            "Accuracy",
-                            "acc_type")
+# sort actual first 
+Actual <- switch_df %>%
+  group_by(participant) %>%
+  summarise(acc_type = "Actual",
+            accuracy = mean(correct))
 
-# tidy 
-rm(temp)
+# optimal 
+Optimal <- switch_df %>%
+  group_by(participant) %>% 
+  summarise(acc_type = "Optimal",
+            accuracy = mean(opt_acc))
 
-#### Accuracy: Combine these? ####
-accuracy_data <- rbind(Exp_accuracy, Opt_accuracy, Act_accuracy)
+# expected 
+Expected <- switch_df %>%
+  group_by(participant) %>%
+  summarise(acc_type = "Expected",
+           accuracy = mean(exp_acc))
 
-# reorder 
-accuracy_data <- select(accuracy_data,
-                        participant,
-                        half,
-                        standard_sep,
-                        acc_type,
-                        Accuracy)
+# combine them 
+accuracy_data <- rbind(Actual, Expected)
+accuracy_data <- rbind(accuracy_data, Optimal)
+
 # save this 
 save(accuracy_data, file = "scratch/accuracy_data")
 

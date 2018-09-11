@@ -4,6 +4,8 @@ library(psyphy)
 
 load("scratch/df_part2")
 
+df <- df[complete.cases(df),]
+
 people <- c(0, 2, 3, 4, 5)
 
 for (person in people) {
@@ -21,14 +23,21 @@ for (person in people) {
 	# now simulate part 2
 	dat <- filter(df, participant == person, is.finite(correct))
 
-	# compute chance of getting 
+	# compute centre chance 
 	centre_chance <- predict(
 		performance_model, 
 		type = "response",
 		newdata = list(delta = dat$separation))
+	
+  # same for side 
+	far_chance <- predict(
+	  performance_model,
+	  type = "response",
+	  newdata = list(delta = 2*dat$separation))
+	
+	side_chance <- 0.5 + 0.5 * far_chance
 
-	side_chance <- 0.5 + 0.5 * centre_chance
-
+	# Optimal strat chance
 	optimal_chance <- pmax(centre_chance, side_chance)
 
 	# simulate 100k experiments

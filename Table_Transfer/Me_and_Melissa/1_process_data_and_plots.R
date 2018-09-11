@@ -23,7 +23,7 @@ df$Participant <- as.factor(df$Participant)
 
 # sort out levels for Order 
 df$Order <- as.factor(df$Order)
-levels(df$Order) <- c("Unprimed", "Primed")
+levels(df$Order) <- c("Control", "Primed")
 
 # Normalise position 
 df$Participant.pos <- abs(df$Participant.pos/df$Hoop.dist)
@@ -37,7 +37,7 @@ plt <- plt + facet_wrap(~Order + Participant, ncol = 8)
 plt <- plt + theme(strip.background = element_blank(),
                    strip.text.x = element_blank())
 plt <- plt + scale_x_continuous(limits = c(1,7))
-plt <- plt + theme(legend.position = "bottom")
+plt <- plt + theme(legend.position = "none")
 plt$labels$x = "Delta (Metres)"
 plt$labels$y = "Normalised Standing position"
 plt$labels$colour = "Condition"
@@ -112,9 +112,11 @@ t.test(Both$Difference ~ Both$Order)
 
 #### remake box_plots with this data ####
 # make plot 
-plt <- ggplot(Both, aes(Order, Difference))
+plt <- ggplot(Both, aes(Order, Difference,
+                        colour = Order))
 plt <- plt + geom_boxplot()
 plt <- plt + theme_bw()
+plt <- plt + theme(legend.position = "none")
 plt <- plt + scale_y_continuous(limits = c(-0.4, 1))
 plt$labels$y <- "Change in Standing Position"
 plt$labels$x <- "Group"
