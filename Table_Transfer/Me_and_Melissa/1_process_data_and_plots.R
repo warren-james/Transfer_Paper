@@ -9,7 +9,7 @@
 
 #### libraries ####
 library(tidyverse)
-
+library(ggthemes)
 #### Any functions ####
 
 #### Constants ####
@@ -23,7 +23,7 @@ df$Participant <- as.factor(df$Participant)
 
 # sort out levels for Order 
 df$Order <- as.factor(df$Order)
-levels(df$Order) <- c("Control", "Primed")
+levels(df$Order) <- c("Control", "Primed", "Optimal")
 
 # Normalise position 
 df$Participant.pos <- abs(df$Participant.pos/df$Hoop.dist)
@@ -34,20 +34,22 @@ plt <- ggplot(df, aes(Hoop.dist*slab_size, Participant.pos,
 plt <- plt + geom_point()
 plt <- plt + theme_bw()
 plt <- plt + facet_wrap(~Order + Participant, ncol = 8)
+plt <- plt + scale_x_continuous(limits = c(1,7))
+plt <- plt + theme_bw()
+plt <- plt + scale_colour_ptol()
 plt <- plt + theme(strip.background = element_blank(),
                    strip.text.x = element_blank())
-plt <- plt + scale_x_continuous(limits = c(1,7))
 plt <- plt + theme(legend.position = "none")
-plt$labels$x = "Delta (Metres)"
-plt$labels$y = "Normalised Standing position"
-plt$labels$colour = "Condition"
+plt <- plt + xlab("delta (metres)")
+plt <- plt + ylab("normalised standing position")
 plt
 
-#NB: unprimed comes first
-
 # save this 
-# ggsave("scratch/plots/double_blind.png")
-  
+ggsave("scratch/plots/double_blind.png", width = 8, height = 4)
+ 
+
+#NB: unprimed comes first
+ 
 #### Analyses ####
 #### Analyses: t.tests... ugh ####
 # first just a simple t.test of position 

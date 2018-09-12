@@ -1,12 +1,15 @@
-library(ggplot2)
-library(dplyr)
-
-dat = read.csv('results.csv')
+library(tidyverse)
+library(ggthemes)
+library(viridisLite)
+dat = read_csv('results.csv')
 
 dat$Participant = as.factor(dat$Participant)
-
 dat$Order = as.factor(dat$Order)
-levels(dat$Order) = c('unprimed', 'primed')
+levels(dat$Order) = c('control', 'primed')
+names(dat)[2] <- "group"
+names(dat)[8] <- "hoop_dist"
+names(dat)[9] <- "participant_position"
+names(dat)[10] <- "hit"
 
 # Work out who did the Reaching Task properly
 dat$ReachingCorrect = ((dat$Centre == 1) + (dat$Middle == 1) + (dat$Edge==1))==3
@@ -14,52 +17,31 @@ dat$ReachingCorrect = ((dat$Centre == 1) + (dat$Middle == 1) + (dat$Edge==1))==3
 
 
 # normalise participant position
-dat$Participant.pos = abs(dat$Participant.pos/dat$Hoop.dist)
+dat$standing_pos = abs(dat$participant_position / dat$hoop_dist)
 
 
-# aggregate
-adat = aggregate(Participant.pos ~ Participant + Order + Hoop.dist, dat, FUN=mean)
+# take the close and far hoops
+(dat %>% 
+	# filter(hoop_dist %in% c(5, 13)) %>%
+	group_by(Participant, group, hoop_dist) %>%
+	summarise(accuracy = mean(hit)) %>%
+	select(-Participant)) -> acc_dat
 
-plt = ggplot(adat, aes(x=(Hoop.dist), y=Participant.pos, colour=Participant))
-plt = plt + geom_point(position=position_jitter(0.1))
-plt = plt + geom_smooth(method=lm, se=F)
-plt = plt + facet_wrap(~Order)
-plt = plt + theme_minimal()
-plt = plt + scale_x_continuous(name = 'hoop position', breaks=c(5,9,13))
-plt = plt + scale_y_continuous(name = 'mean participant standing position')
-plt = plt + theme(legend.position="none")
-ggsave("primingResults.pdf", width=12, height=6)
-ggsave("primingResults.png", width=12, height=6)
+# acc_dat$hoop <- fct_relevel(acc_dat$hoop, close, medium, far)
+
+opt_dat <- tibble(group = "optimal", hoop_dist = 13, accuracy = rbinom(32, 15, 0.5)/15, hoop = "far")
+
+acc_dat <- bind_rows(acc_dat, opt_dat)
 
 
-dist5 = filter(adat, Hoop.dist==5)
-datDiff = select(dist5, Participant, Order, Participant.pos)
-names(datDiff)[3] = "pos5"
-datDiff$pos13 = filter(adat, Hoop.dist==13)$Participant.pos
+acc_dat$hoop <- as.factor(acc_dat$hoop_dist)
+levels(acc_dat$hoop) <- c("close", "medium", "far")
 
-datDiff$pos.change = with(datDiff, pos13 - pos5)
-rm(dist5)
+acc_dat$group <- as_factor(acc_dat$group)
 
-plt = ggplot(datDiff, aes(x=Order, y=pos.change)) 
-plt = plt + geom_boxplot()
-plt = plt + scale_x_discrete(name="group")
-plt = plt + scale_y_continuous(name="change in standing position")
-
-plt = plt + theme_minimal()
-ggsave("bxpltResults.png", width=4, height=4)
-plt
-
-t.test(
-	filter(datDiff, Order=="primed")$pos.change, 
-	filter(datDiff, Order=="unprimed")$pos.change,
-	alternative="greater" )
-
-library(lme4)
-
-m = lmer(data=dat, Participant.pos ~ Order + Hoop.dist + (1|Participant))
-
-medianDat = aggregate(Participant.pos ~ Hoop.dist + Order, dat, FUN=mean)
-
-plt2 = ggplot(medianDat, aes(x=Hoop.dist, y=Participant.pos, fill=Order))
-plt2 = plt2 + geom_bar(stat="identity", position=position_dodge())
-plt2
+plt <- ggplot(acc_dat, aes(x = hoop, y = accuracy, fill = group))
+plt <- plt + geom_boxplot()
+plt <- plt + theme_bw()
+plt <- plt + scale_fill_ptol()
+plt <- plt + scale_y_continuous(limits = c(0, 1), expand = c(0, 0))
+ggsave("acc_bloxplot.png", width = 4, height = 3)
