@@ -38,10 +38,12 @@ acc_dat$hoop <- as.factor(acc_dat$hoop_dist)
 levels(acc_dat$hoop) <- c("close", "medium", "far")
 
 acc_dat$group <- as_factor(acc_dat$group)
+acc_dat$group <- fct_relevel(acc_dat$group, "control", "primed", "optimal")
 
 plt <- ggplot(acc_dat, aes(x = hoop, y = accuracy, fill = group))
 plt <- plt + geom_boxplot()
 plt <- plt + theme_bw()
-plt <- plt + scale_fill_ptol()
+plt <- plt + scale_fill_manual(values = ptol_pal()(3)[c(1,3,2)])
 plt <- plt + scale_y_continuous(limits = c(0, 1), expand = c(0, 0))
 ggsave("acc_bloxplot.png", width = 4, height = 3)
+plt

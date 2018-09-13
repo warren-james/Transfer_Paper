@@ -7,6 +7,7 @@
 #### Libraries ####
 library(tidyverse)
 library(gridExtra)
+library(ggthemes)
 
 #### any functions #### 
 get_VisDegs <- function(separation,distance){
@@ -146,10 +147,12 @@ plt <- plt + scale_y_continuous(limits = c(0.6, 0.9)) +
 plt <- plt + geom_abline(intercept = 0, slope = 1)
 plt <- plt + geom_point()
 plt <- plt + facet_wrap(~ half)
+plt <- plt + scale_color_ptol()
 # plt <- plt + theme(legend.position = "none")
 plt$labels$colour <- "Condition"
-plt$labels$x <- "Optimal Accuracy"
-plt$labels$y <- "Actual Accuracy"
+plt <- plt + xlab("optimal accuracy")
+plt <- plt + ylab("actual accuracy")
+ggsave("scatter_plots.png", width = 4, height = 3)
 plt
 
 #### PLOTS: Clarke and Hunt (2016) figure 3 ####
@@ -188,13 +191,14 @@ plt2 <- plt2 + geom_point()
 plt2 <- plt2 + geom_line(aes(group = participant))
 plt2 <- plt2 + facet_wrap(~condition)
 plt2 <- plt2 + theme(legend.position = "none")
-plt2$labels$y <- "Proportion of Fixations to a side box"
-plt2$labels$x <- "Delta (Visual Degrees)"
+plt2 <- plt2 + scale_color_ptol()
+plt2 <- plt2 + xlab("proportion of fixations to a side box")
+plt2 <- plt2 + ylab("delta (visual degrees)")
 plt2$labels$colour <- "Condtion"
-plt2 
+ggsave("line_plots.png", width = 4, height = 3)
 
 #### PLOTS: Combine the above two? ####
-grid.arrange(plt, plt2, nrow = 2)
+# grid.arrange(plt, plt2, nrow = 2)
 
 # need to save this manually
 
