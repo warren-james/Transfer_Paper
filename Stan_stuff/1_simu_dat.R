@@ -104,7 +104,7 @@ plot(x,y)
 lines(x, logistic(b*x+c))
 
 #### chance performance: dumb ####
-x = seq(-5, 5, 0.1)
+x = seq(-2, 2, 0.1)
 y = pmax(0.5, 1/(1+exp(-x))) > runif(length(x))
 plot(x,y)
 
@@ -145,7 +145,8 @@ fit6 <- stan(
   chains = 1,
   warmup = 1000,
   iter = 2000,
-  refresh = 100
+  refresh = 100,
+  control = list(adapt_delta = 0.99)
 )
 
 # extract samples 

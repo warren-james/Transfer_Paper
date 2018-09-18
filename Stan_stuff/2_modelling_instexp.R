@@ -28,6 +28,9 @@ m2 <- stan(
   refresh = 100
 )
 
+# save model 
+save(m2, file = "scratch/models/m2")
+
 # make dumb plot 
 # extract samples
 post_m2 <- rstan::extract(m2)
@@ -40,10 +43,14 @@ c <- mean(post_m2$c)
 acc_dat <- df %>%
   group_by(sep_scaled, given_instruction) %>%
   summarise(accuracy = mean(correct)) %>%
-  mutate(p = logistic(pmax(0,
-                           b*sep_scaled+
-                             b_i*given_instruction+c)))
+  mutate(p = 0.5 +  logistic(pmax(0,
+                                  b*sep_scaled+
+                                    b_i*given_instruction+c))/2)
 
+# plot 
+# probably go for ggplot here
+plot(acc_dat$sep_scaled, acc_dat$accuracy)
+lines(acc_dat$sep_scaled, acc_dat$p)
 
 #### acc ~ detla + inst + half ####
 stan_df <- list(

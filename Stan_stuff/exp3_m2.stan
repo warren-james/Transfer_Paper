@@ -13,5 +13,5 @@ model {
   c ~ normal(0,10);
   b ~ normal(0,10);
   for(n in 1:N)
-      acc[n] ~ bernoulli_logit(fmax(0,b * delta[n] + b_i * inst[n] + c));
+      acc[n] ~ bernoulli_logit(2 * fmax(0,b * delta[n] + b_i * inst[n] + c) - 1);
 }
