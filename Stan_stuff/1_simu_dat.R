@@ -4,6 +4,7 @@
 #### libraries ####
 library(tidyverse)
 library(rstan)
+library(psych)
 
 #### make data ####
 x <- seq(1,100,1)
@@ -50,8 +51,8 @@ fit2 <- stan(
 # on binary data
 # setup data 
 x = seq(-5, 5, 0.1)
-y = 1/(1+exp(-(x + 2 * runif(length(x))))) > 0.5
-  
+y = 1/(1+exp(-x)) > runif(length(x))
+
 # setup list 
 glm_dat <- list(
   x = x,
@@ -102,4 +103,60 @@ c <- mean(post_fit4$c)
 plot(x,y)
 lines(x, logistic(b*x+c))
 
-#### chance performance ####
+#### chance performance: dumb ####
+x = seq(-5, 5, 0.1)
+y = pmax(0.5, 1/(1+exp(-x))) > runif(length(x))
+plot(x,y)
+
+cha_dat <- list(
+  x = x,
+  y = y,
+  N = length(y)
+)
+
+# fit model 
+# this is bad because we're fitting a linear regression
+# to binary data
+fit5 <- stan(
+  file = "logistic_regression.stan", 
+  data = cha_dat,
+  chains = 1,
+  warmup = 1000,
+  iter = 2000,
+  refresh = 100
+)
+
+# extract samples 
+post_fit5 <- rstan::extract(fit5)
+
+b <- mean(post_fit5$b)
+c <- mean(post_fit5$c)
+
+# good(ish) plot, bad model
+plot(x,y)
+lines(x, logistic(b*x+c))
+
+#### chance performance: good ####
+# chance performance is now accounted for
+# difference model
+fit6 <- stan(
+  file = "mafc_regression.stan", 
+  data = cha_dat,
+  chains = 1,
+  warmup = 1000,
+  iter = 2000,
+  refresh = 100
+)
+
+# extract samples 
+post_fit6 <- rstan::extract(fit6)
+
+b <- mean(post_fit6$b)
+c <- mean(post_fit6$c)
+
+# good(ish) plot, bad model
+plot(x,y)
+lines(x, logistic(pmax(0,b*x+c)))
+
+
+
