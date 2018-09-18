@@ -12,13 +12,14 @@ load("../Instructed_Eye_Movements/scratch/models_df")
 # listify for passing to Stan 
 stan_df <- list(
   N = nrow(df),
+  inst = df$given_instruction,
   acc = df$correct,
   delta = df$sep_scaled
 )
 
 # run model 
-m1 <- stan(
-  file = "exp3_m1.stan", 
+m2 <- stan(
+  file = "exp3_m2.stan", 
   data = stan_df,
   chains = 1,
   warmup = 1000,
@@ -28,16 +29,19 @@ m1 <- stan(
 
 # make dumb plot 
 # extract samples
-post_m1 <- rstan::extract(m1)
+post_m2 <- rstan::extract(m2)
 
-b <- mean(post_m1$b)
-c <- mean(post_m1$c)
+b <- mean(post_m2$b)
+b_i <- mean(post_m2$b_i)
+c <- mean(post_m2$c)
 
 # sort data 
 acc_dat <- df %>%
-  group_by(sep_scaled) %>%
+  group_by(sep_scaled, given_instruction) %>%
   summarise(accuracy = mean(correct)) %>%
-  mutate(p = logistic(pmax(0,b*sep_scaled+c)))
+  mutate(p = logistic(pmax(0,
+                           b*sep_scaled+
+                             b_i*given_instruction+c)))
 
 # good(ish) plot, bad model
 plot(acc_dat$sep_scaled, acc_dat$accuracy)
