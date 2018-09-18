@@ -27,3 +27,20 @@ fit1 <- stan(
   refresh = 100
 )
 
+#### linear regression ####
+lin_data <- list(
+  N = length(y),
+  y = y, 
+  x = x
+)
+
+# create model fit
+fit2 <- stan(
+  file = "linear_regression.stan",
+  data = lin_data,
+  chains = 4,
+  warmup = 1000,
+  iter = 2000,
+  cores = 2,
+  refresh = 100
+)
