@@ -9,6 +9,7 @@ library(psych)
 #### load data ####
 load("../Instructed_Eye_Movements/scratch/models_df")
 
+#### acc ~ delta + inst ####
 # listify for passing to Stan 
 stan_df <- list(
   N = nrow(df),
@@ -43,9 +44,31 @@ acc_dat <- df %>%
                            b*sep_scaled+
                              b_i*given_instruction+c)))
 
-# good(ish) plot, bad model
-plot(acc_dat$sep_scaled, acc_dat$accuracy)
-lines(acc_dat$sep_scaled, acc_dat$p)
+
+#### acc ~ detla + inst + half ####
+stan_df <- list(
+  N = nrow(df),
+  inst = df$given_instruction,
+  acc = df$correct,
+  delta = df$sep_scaled,
+  half = df$second_half
+)
+
+# run model 
+m3 <- stan(
+  file = "exp3_m3.stan", 
+  data = stan_df,
+  chains = 1,
+  warmup = 1000,
+  iter = 2000,
+  refresh = 100
+)
+
+# save model 
+save(m3, file = "scratch/models/m3")
+
+# extract samples 
+post_m3 <- rstan::extract(m3)
 
 # for a better plot
 get_fx_for_sep <- function(d, post) {
