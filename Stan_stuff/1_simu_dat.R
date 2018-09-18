@@ -44,3 +44,7 @@ fit2 <- stan(
   cores = 2,
   refresh = 100
 )
+
+
+#### GLM ####
+
