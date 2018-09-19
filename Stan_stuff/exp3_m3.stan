@@ -22,5 +22,9 @@ model {
 
   // likelihood
   for(n in 1:N)
-      acc[n] ~ bernoulli_logit(2 * fmax(0.5,b * delta[n] + b_i * inst[n] + b_h * half[n] + b_hi * inst[n] * half[n] + c) - 1);
+      acc[n] ~ bernoulli_logit(2 * fmax(0.5, b * delta[n] + 
+                                             b_i * inst[n] +
+                                             b_h * half[n] +
+                                             b_hi * inst[n] * half[n] +
+                                             c) - 1);
 }
