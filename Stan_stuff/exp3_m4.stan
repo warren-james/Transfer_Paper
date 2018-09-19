@@ -5,11 +5,11 @@ data {
   int<lower = 0, upper = 1> half[N];  // Half
   vector[N] delta;                    // Number of trials
   int<lower = 0> S;                   // Number of Subjects
-  int<lower = 0, upper = S> subj[N]   // Subject ID
+  int<lower = 0, upper = S> subj[N];  // Subject ID
 }
 parameters {
   real c;                      // Fixed intercept
-  vector[J] subj_c;            // rand Intercepts by subj
+  vector[S] subj_c;            // rand Intercepts by subj
   real b;                      // Slope
   real b_i;                    // Main effect inst
   real b_h;                    // Main effect half

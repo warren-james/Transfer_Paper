@@ -52,7 +52,7 @@ acc_dat <- df %>%
 plot(acc_dat$sep_scaled, acc_dat$accuracy)
 lines(acc_dat$sep_scaled, acc_dat$p)
 
-#### acc ~ detla + inst + half ####
+#### acc ~ detla + (inst + half)^2 ####
 stan_df <- list(
   N = nrow(df),
   inst = df$given_instruction,
@@ -76,6 +76,29 @@ save(m3, file = "scratch/models/m3")
 
 # extract samples 
 post_m3 <- rstan::extract(m3)
+
+#### acc ~ delta + inst + half w/random intercepts ####
+stan_df <- list(
+  N = nrow(df),
+  inst = df$given_instruction,
+  acc = df$correct,
+  delta = df$sep_scaled,
+  half = df$second_half,
+  S = length(unique(df$participant)),
+  subj = df$participant
+)
+
+# run model 
+m4 <- stan(
+  file = "exp3_m4.stan", 
+  data = stan_df,
+  chains = 1,
+  warmup = 1000,
+  iter = 2000,
+  refresh = 100
+)
+
+
 
 # for a better plot
 get_fx_for_sep <- function(d, post) {

@@ -104,7 +104,7 @@ plot(x,y)
 lines(x, logistic(b*x+c))
 
 #### chance performance: dumb ####
-x = seq(-2, 2, 0.1)
+x = seq(-9, 9, 0.1)
 y = pmax(0.5, 1/(1+exp(-x))) > runif(length(x))
 plot(x,y)
 

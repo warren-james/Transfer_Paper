@@ -11,5 +11,5 @@ model {
   c ~ normal(0,10);
   b ~ normal(0,10);
   for(n in 1:N)
-      y[n] ~ bernoulli_logit(2 * fmax(0,b * x[n] + c) - 1);
+      y[n] ~ bernoulli_logit(2 * fmax(0.5, b * x[n] + c) - 1);
 }
