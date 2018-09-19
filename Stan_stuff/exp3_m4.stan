@@ -5,7 +5,7 @@ data {
   int<lower = 0, upper = 1> half[N];  // Half
   vector[N] delta;                    // Number of trials
   int<lower = 0> S;                   // Number of Subjects
-  int<lower = 0, upper = S> subj[N];  // Subject ID
+  int<lower = 0, upper = S> subj[S];  // Subject ID
 }
 parameters {
   real c;                      // Fixed intercept

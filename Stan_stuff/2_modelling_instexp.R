@@ -77,6 +77,27 @@ save(m3, file = "scratch/models/m3")
 # extract samples 
 post_m3 <- rstan::extract(m3)
 
+#### acc ~ (inst + half)^2 ####
+stan_df <- list(
+  N = nrow(df),
+  inst = df$given_instruction,
+  acc = df$correct,
+  half = df$second_half
+)
+
+# run model 
+m3_1 <- stan(
+  file = "exp3_m3_1.stan", 
+  data = stan_df,
+  chains = 1,
+  warmup = 1000,
+  iter = 2000,
+  refresh = 100
+)
+
+# save model 
+save(m3_1, file = "scratch/models/m3_1")
+
 #### acc ~ delta + inst + half w/random intercepts ####
 stan_df <- list(
   N = nrow(df),
