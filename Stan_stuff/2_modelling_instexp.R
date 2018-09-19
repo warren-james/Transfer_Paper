@@ -87,7 +87,7 @@ stan_df <- list(
 
 # run model 
 m3_1 <- stan(
-  file = "exp3_m3_1.stan", 
+  file = "exp3_m3_2.stan", 
   data = stan_df,
   chains = 1,
   warmup = 1000,
@@ -99,6 +99,7 @@ m3_1 <- stan(
 save(m3_1, file = "scratch/models/m3_1")
 
 #### acc ~ delta + inst + half w/random intercepts ####
+# Not sure if this works...
 stan_df <- list(
   N = nrow(df),
   inst = df$given_instruction,

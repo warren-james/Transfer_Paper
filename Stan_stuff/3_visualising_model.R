@@ -75,10 +75,6 @@ get_fx_for_sep <- function(post) {
   return(fx)
 }
 
-fx_min_sep  <- get_fx_for_sep(min(df$sep_scaled), post_samples)
-fx_mean_sep <- get_fx_for_sep(mean(df$sep_scaled), post_samples)
-fx_max_sep  <- get_fx_for_sep(max(df$sep_scaled), post_samples)
-
 fx <- get_fx_for_sep(post_samples)
 
 plt <- ggplot(fx, aes(x = samples, fill = condition))

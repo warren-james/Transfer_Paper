@@ -23,6 +23,6 @@ model {
   for(n in 1:N) {
       mu = b_i * inst[n] + b_h * half[n]
          + b_hi * inst[n] * half[n] + c;
-      acc[n] ~ bernoulli_logit(2 * fmax(0.5, mu) - 1);
+      acc[n] ~ bernoulli_logit(fmax(0.5, mu));
   }
 }
