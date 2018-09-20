@@ -20,7 +20,7 @@ stan_df <- list(
 
 # run model 
 m2 <- stan(
-  file = "exp3_m2.stan", 
+  file = "models/exp3_m2.stan", 
   data = stan_df,
   chains = 1,
   warmup = 1000,
@@ -29,7 +29,7 @@ m2 <- stan(
 )
 
 # save model 
-save(m2, file = "scratch/models/m2")
+save(m2, file = "scratch/model_outputs/m2")
 
 # make dumb plot 
 # extract samples
@@ -63,7 +63,7 @@ stan_df <- list(
 
 # run model 
 m3 <- stan(
-  file = "exp3_m3.stan", 
+  file = "models/exp3_m3.stan", 
   data = stan_df,
   chains = 1,
   warmup = 1000,
@@ -72,7 +72,7 @@ m3 <- stan(
 )
 
 # save model 
-save(m3, file = "scratch/models/m3")
+save(m3, file = "scratch/model_outputs/m3")
 
 # extract samples 
 post_m3 <- rstan::extract(m3)
@@ -83,7 +83,7 @@ post_m3 <- rstan::extract(m3)
 # removed the 2 * line_pred -1
 # run model 
 m3_1 <- stan(
-  file = "exp3_m3_1.stan", 
+  file = "models/exp3_m3_1.stan", 
   data = stan_df,
   chains = 1,
   warmup = 1000,
@@ -92,7 +92,7 @@ m3_1 <- stan(
 )
 
 # save model 
-save(m3_1, file = "scratch/models/m3_1")
+save(m3_1, file = "scratch/model_outputs/m3_1")
 
 # this one drops below 50% accuracy
 
@@ -105,8 +105,8 @@ stan_df <- list(
 )
 
 # run model 
-m4_1 <- stan(
-  file = "exp3_m4_1.stan", 
+m4 <- stan(
+  file = "models/exp3_m4.stan", 
   data = stan_df,
   chains = 1,
   warmup = 1000,
@@ -115,53 +115,26 @@ m4_1 <- stan(
 )
 
 # save model 
-save(m4_1, file = "scratch/models/m4_1")
+save(m4_1, file = "scratch/model_outputs/m4")
 
-#### acc ~ delta + inst + half w/random intercepts ####
-# Not sure if this works...
+#### acc ~ (inst + half)^2 w/random intercepts ####
 stan_df <- list(
   N = nrow(df),
   inst = df$given_instruction,
   acc = df$correct,
-  delta = df$sep_scaled,
   half = df$second_half,
   S = length(unique(df$participant)),
   subj = df$participant
 )
 
-# run model 
-m4 <- stan(
-  file = "exp3_m4.stan", 
+# run model
+m5 <- stan(
+  file = "models/exp3_m5.stan", 
   data = stan_df,
   chains = 1,
   warmup = 1000,
   iter = 2000,
   refresh = 100
 )
-
-
-
-# for a better plot
-get_fx_for_sep <- function(d, post) {
-  print(delta)
-  fx <- tibble(
-    condition = rep(c(
-      "Baseline", 
-      "Instructed", 
-      "Practice",
-      "Transfer"), each = length(post$a)),
-    delta = d,
-    samples = c(
-      logistic(post$a + post$b * d), 
-      logistic(post$a + post$instruction + post$b  * d + post$instrbysep * d), 
-      logistic(post$a + post$half + post$b  * d + post$halfbysep  * d),
-      logistic(post$a + post$instruction + post$half + post$halfbyinst + post$b * d + post$instrbysep * d + post$halfbysep * d)))
-  
-  return(fx)
-}
-
-
-
-
 
 
