@@ -137,4 +137,7 @@ m5 <- stan(
   refresh = 100
 )
 
+# save 
+save(m5, file = "scratch/model_outputs/m5")
+
 
