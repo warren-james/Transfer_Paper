@@ -26,6 +26,8 @@ dat$distance <- as.numeric(dat$hoop)
 dat$distance[which(dat$distance == 2)] <- 4.5
 dat$distance[which(dat$distance == 3)] <- 7.0
 
+levels(dat$condition) <- c("MathsQuestions", "LogicPuzzle", "ReachingTask")
+
 # (dat %>% 
 # 	mutate(standing_position = standing_position / distance)%>%
 # 	group_by(person, condition, hoop) %>%
@@ -36,7 +38,8 @@ summary(dat)
 plt <- ggplot(dat, aes(x = distance, y = standing_position, colour = condition))
 plt <- plt + geom_point()
 plt <- plt + facet_wrap(~person)
-plt <- plt + scale_colour_ptol()
+plt <- plt + scale_fill_manual(values = c("#CCBB44", "#228833", "#4477AA", "#CC6677"))
+plt
 
 far_reaching <- filter(dat, hoop == "far", condition == "ReachingTask")$mean_standing_pos
 far_maths <- filter(dat, hoop == "far", condition == "MathsQuestions")$mean_standing_pos
