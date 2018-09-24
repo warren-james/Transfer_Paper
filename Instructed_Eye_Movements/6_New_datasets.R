@@ -129,9 +129,16 @@ rm(sep)
 # remove NA's 
 df_nar <- df[complete.cases(df),]
 
+#### get condition ####
+df_nar$condition[df_nar$participant %% 2 == 0] <- "Primed"
+df_nar$condition[df_nar$participant %% 2 == 1] <- "Control"
+
+df_nar$condition <- as.factor(df_nar$condition)
+df_nar$condition <- factor(df_nar$condition, levels(df_nar$condition)[c(2,1)])
+
 # summary data for mean accuracy 
 agdat <- df_nar %>%
-  group_by(participant, separation) %>%
+  group_by(participant, separation, condition) %>%
   summarise(meanAcc = mean(accuracy))
 
 # make plot
@@ -146,7 +153,7 @@ plt <- plt + stat_smooth(colour="black",
 plt <- plt + geom_point(data=agdat, aes(get_VisDegs(separation/ppcm, Screen_dist),
                                        meanAcc))
 plt <- plt + theme(strip.text.x = element_blank())
-plt <- plt + facet_wrap(~participant)
+plt <- plt + facet_wrap(~condition + participant, ncol = 6)
 plt <- plt + scale_x_continuous(breaks = c(0, 5, 10, 15))
 plt <- plt + scale_y_continuous(breaks = c(.25, .5, .75, 1))
 plt$labels$x <- "Delta (Visual Degrees)"

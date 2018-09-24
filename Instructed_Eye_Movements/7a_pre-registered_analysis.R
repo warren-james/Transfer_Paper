@@ -192,8 +192,8 @@ plt2 <- plt2 + geom_line(aes(group = participant))
 plt2 <- plt2 + facet_wrap(~condition)
 plt2 <- plt2 + theme(legend.position = "none")
 plt2 <- plt2 + scale_color_ptol()
-plt2 <- plt2 + xlab("proportion of fixations to a side box")
-plt2 <- plt2 + ylab("delta (visual degrees)")
+plt2 <- plt2 + xlab("Delta (Visual Degrees)")
+plt2 <- plt2 + ylab("Proportion of fixations to a side box")
 plt2$labels$colour <- "Condtion"
 ggsave("line_plots.png", width = 4, height = 3)
 
