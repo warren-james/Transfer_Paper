@@ -1,10 +1,11 @@
 library(tidyverse)
 library(haven)
+library(ggthemes)
 
 dat <- read_sav("DATACOLLECTIONPHYSICAL.sav") 
 
 (dat %>%
-	mutate(person = 1:nrow(dat)) %>%
+	mutate(person = as.factor(1:nrow(dat))) %>%
 	select(person, Condition, 
 		PositionCHoopTrial1, PositionCHoopTrial2, PositionCHoopTrial3,
 		PositionMHoopTrial1, PositionMHoopTrial2, PositionMHoopTrial3,
@@ -25,14 +26,17 @@ dat$distance <- as.numeric(dat$hoop)
 dat$distance[which(dat$distance == 2)] <- 4.5
 dat$distance[which(dat$distance == 3)] <- 7.0
 
-(dat %>% 
-	mutate(standing_position = standing_position / distance)%>%
-	group_by(person, condition, hoop) %>%
-	summarise(mean_standing_pos = mean(standing_position))) -> dat
+# (dat %>% 
+# 	mutate(standing_position = standing_position / distance)%>%
+# 	group_by(person, condition, hoop) %>%
+# 	summarise(mean_standing_pos = mean(standing_position))) -> dat
 summary(dat)
 
 
-ggplot(dat, aes(x = hoop, y = mean_standing_pos, fill = condition)) + geom_boxplot()
+plt <- ggplot(dat, aes(x = distance, y = standing_position, colour = condition))
+plt <- plt + geom_point()
+plt <- plt + facet_wrap(~person)
+plt <- plt + scale_colour_ptol()
 
 far_reaching <- filter(dat, hoop == "far", condition == "ReachingTask")$mean_standing_pos
 far_maths <- filter(dat, hoop == "far", condition == "MathsQuestions")$mean_standing_pos
