@@ -33,10 +33,10 @@ save(df, file = "scratch/models_df")
 m1 <- map2stan( 
   alist(
     correct ~ dbinom(1, p),
-    mafc.logit(p) <- pmax(0.5, a + a_p[participant] +       
+    logit(p) <- a + a_p[participant] +       
       instruction * given_instruction + 
       half * second_half + 
-      halfbyinst * second_half * given_instruction),
+      halfbyinst * second_half * given_instruction,
     a ~ dnorm(0, 1),   
     instruction ~ dnorm(0, 1),
     half ~ dnorm(0, 1),
@@ -128,7 +128,7 @@ m5 <- map2stan(
       half * second_half + 
       halfbysep * second_half * sep_scaled + 
       halfbyinst * second_half * given_instruction + 
-      threeway * second_half * given_instruction + sep_scaled,
+      threeway * second_half * given_instruction * sep_scaled,
     a ~ dnorm(0, 1),
     b ~ dnorm(0, 1),
     instruction ~ dnorm(0, 1),

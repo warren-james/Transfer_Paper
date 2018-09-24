@@ -143,6 +143,7 @@ plt <- ggplot(plt_dat, aes(Optimal, Actual,
 plt <- plt + theme_bw() 
 plt <- plt + geom_point()
 plt <- plt + geom_abline(intercept = 0, slope = 1)
+plt <- plt + scale_color_ptol()
 plt <- plt + facet_wrap(~ Session)
 plt
 
@@ -165,6 +166,7 @@ plt2 <- ggplot(plt_dat2, aes(hoop_dist*slab_size, Position,
                              colour = Condition))
 plt2 <- plt2 + theme_bw()
 plt2 <- plt2 + geom_point()
+plt2 <- plt2 + scale_color_ptol()
 plt2 <- plt2 + geom_line(aes(group = Participant))
 plt2$labels$x <- "Delta (metres)"
 plt2$labels$y <- "Normalise standing position"
