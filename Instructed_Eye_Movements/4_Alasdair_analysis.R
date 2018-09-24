@@ -2,8 +2,8 @@
 #### libraries needed ####
 library(tidyverse)
 library(rethinking)
-library(viridisLite)
-
+# library(viridisLite)
+library(ggthemes)
 # rethinking options 
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
@@ -142,24 +142,29 @@ m5 <- map2stan(
   data = df,
   iter = 2000, warmup = 1000, chains = 3, cores = 3)
 
-compare(m1, m2, m3, m4, m5)
+
 # save this model 
-save(m1, m2, m3, m4, file = "scratch/models/m1_rand_intercept")
+save(m1, m2, m3, m4, m5, file = "scratch/models/models")
+
+load("scratch/models/models")
+
+compare(m1, m2, m3, m4)
 
 
+# plot based on m4, as it appears to be the best
 post <- extract.samples(m4)
 
 # post$ etc saved as a,b,c,d for now
 
 
 get_fx_for_sep <- function(d, post) {
-  print(delta)
+  
   fx <- tibble(
     condition = rep(c(
-      "Baseline", 
-      "Instructed", 
-      "Practice",
-      "Transfer"), each = length(post$a)),
+      "baseline", 
+      "instructed", 
+      "practice",
+      "transfer"), each = length(post$a)),
     delta = d,
     samples = c(
       logistic(post$a + post$b * d), 
@@ -177,15 +182,22 @@ fx_max_sep  <- get_fx_for_sep(max(df$sep_scaled), post)
 
 fx <- bind_rows(fx_min_sep, fx_mean_sep, fx_max_sep)
 
+# turn delta in to a labelled factor for plotting
+fx$delta <- as.factor(fx$delta)
+levels(fx$delta) = c("close", "medium", "far")
+
 plt <- ggplot(fx, aes(x = samples, fill = condition))
-plt <- plt + geom_density(alpha = 0.5)
-plt <- plt + theme_bw()  + scale_fill_viridis_d()
+plt <- plt + geom_density(alpha = 0.6)
+plt <- plt + theme_bw()  
+plt <- plt + scale_fill_manual(values = c("#228833", "#CCBB44", "#4477AA", "#CC6677"))
 plt <- plt + facet_wrap(~delta)
 plt <- plt + scale_x_continuous(
-  name = "probablity of correctly responding to target", limits = c(0.2,1), expand = c(0,0))
-
+  name = "probablity of correctly responding to target", 
+  limits = c(0.4,1), expand = c(0,0),
+  breaks = c(0.5, 0.75, 1))
+plt <- plt + scale_y_continuous(expand = c(0, 0), limits = c(0, 40))
 ggsave("scratch/plots/joint_model.png", width = 8, height = 3)
-
+plt
 
 #  calculate HDPI
 
