@@ -54,22 +54,34 @@ dat <- read_sav("DATACOLLECTIONPHYSICAL.sav")
 (dat %>%
 	mutate(person = as.factor(1:nrow(dat))) %>%
 	select(person, Condition, 
-		PositionCHoopTrial1, PositionCHoopTrial2, PositionCHoopTrial3,
-		PositionMHoopTrial1, PositionMHoopTrial2, PositionMHoopTrial3,
-		PositionFHoopTrial1, PositionFHoopTrial2, PositionFHoopTrial3
+		AccuracyCHoopTrial1, AccuracyCHoopTrial2, AccuracyCHoopTrial3,
+		AccuracyMHoopTrial1, AccuracyMHoopTrial2, AccuracyMHoopTrial3,
+		AccuracyFHoopTrial1, AccuracyFHoopTrial2, AccuracyFHoopTrial3
 		) %>%
 	rename(condition = "Condition") %>%
-	gather("hoop", "standing_position", -condition, -person) %>%
+	gather("hoop", "accuracy", -condition, -person) %>%
 	mutate(
 		condition = as_factor(condition),
 		hoop = as_factor(hoop),
 		hoop = fct_collapse(hoop, 
-			close = c("PositionCHoopTrial1", "PositionCHoopTrial2", "PositionCHoopTrial3"),
-			med   = c("PositionMHoopTrial1", "PositionMHoopTrial2", "PositionMHoopTrial3"),
-			far   = c("PositionFHoopTrial1", "PositionFHoopTrial2", "PositionFHoopTrial3"))
-		)) -> dat 
+			close = c("AccuracyCHoopTrial1", "AccuracyCHoopTrial2", "AccuracyCHoopTrial3"),
+			med   = c("AccuracyMHoopTrial1", "AccuracyMHoopTrial2", "AccuracyMHoopTrial3"),
+			far   = c("AccuracyFHoopTrial1", "AccuracyFHoopTrial2", "AccuracyFHoopTrial3"))
+		) %>%
+	group_by(person, condition) %>%
+	summarise(accuracy = mean(accuracy))) -> dat 
+
+levels(dat$condition) <- c("Reaching Task", "Logic Puzzles", "Maths Questions")
 
 
+plt <- ggplot(dat, aes(x = condition, y = accuracy, fill = condition))
+plt <- plt + geom_boxplot()
+plt <- plt + scale_colour_manual(values = c("#CC6677", "#4477AA", "#117733"))
+plt <- plt + theme_bw()
+plt <- plt + scale_x_discrete("condition")
+plt <- plt + theme(legend.position = "none")
+plt <- plt + scale_y_continuous("Accuracy", limits = c(0, 1), expand = c(0,0))
+ggsave("accuracy.png", width = 4, height = 3)
 # m <- aov(data = filter(dat, hoop == "far"), mean_standing_pos ~ condition)
 
 # # try a needlessly crazy beta regression model
