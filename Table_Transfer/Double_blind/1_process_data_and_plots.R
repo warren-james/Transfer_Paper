@@ -10,6 +10,7 @@
 #### libraries ####
 library(tidyverse)
 library(ggthemes)
+
 #### Any functions ####
 
 #### Constants ####
@@ -31,7 +32,7 @@ df$Participant.pos <- abs(df$Participant.pos/df$Hoop.dist)
 #### make plots ####
 plt <- ggplot(df, aes(Hoop.dist*slab_size, Participant.pos,
                       colour = Order))
-plt <- plt + geom_point()
+plt <- plt + geom_point(alpha = 0.4)
 plt <- plt + theme_bw()
 plt <- plt + facet_wrap(~Order + Participant, ncol = 8)
 plt <- plt + scale_x_continuous(limits = c(1,7))
@@ -40,14 +41,13 @@ plt <- plt + scale_colour_ptol()
 plt <- plt + theme(strip.background = element_blank(),
                    strip.text.x = element_blank())
 plt <- plt + theme(legend.position = "none")
-plt <- plt + xlab("delta (metres)")
-plt <- plt + ylab("normalised standing position")
+plt <- plt + xlab("Delta (Metres)")
+plt <- plt + ylab("Normalised Standing Position")
 plt
 
 # save this 
 ggsave("scratch/plots/double_blind.png", width = 8, height = 4)
  
-
 #NB: unprimed comes first
  
 #### Analyses ####

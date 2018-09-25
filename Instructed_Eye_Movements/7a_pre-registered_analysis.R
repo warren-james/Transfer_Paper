@@ -47,8 +47,7 @@ rm(switch_df)
 #### ANALYSIS: Difference session 2 ####
 
 # NB: For all the t.tests, you should put var.equal = T so as to use the standard student's t-test
-# This stops it correcting the df otherwise it applies the Welch correction which is useful when the 
-# group sizes are unequal. 
+# This stops it correcting the df otherwise it applies the Welch correction
 
 # Get a difference score for second half sessions for both groups. Then compare these together.
 # Smaller values means closer to the optimal accuracy level.
@@ -73,7 +72,7 @@ dat_analysis_1 <- dat_analysis[dat_analysis$half == "second",]
 # now do t-test 
 t_test_diff_1 <- t.test(dat_analysis_1$difference ~
                           dat_analysis_1$condition,
-                        alternative = c("less"),
+                        # alternative = c("less"),
                         var.equal = T)
 # not sig, but we know that from the bayesian regression model 
 
@@ -93,7 +92,7 @@ dat_analysis_2 <- dat_analysis[dat_analysis$half == "first",]
 # now test 
 t_test_diff_2 <- t.test(dat_analysis_2$difference ~
                           dat_analysis_2$condition,
-                        # alternative = c("less"),
+                        # alternative = c("greater"),
                         var.equal = T)
 # This is significant though...
 
