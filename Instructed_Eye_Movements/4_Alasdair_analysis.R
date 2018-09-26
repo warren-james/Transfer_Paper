@@ -161,7 +161,7 @@ compare(m1, m2, m3, m4)
 
 
 # plot based on m4, as it appears to be the best
-post <- extract.samples(m4)
+post <- extract.samples(m5)
 
 # post$ etc saved as a,b,c,d for now
 
@@ -177,9 +177,13 @@ get_fx_for_sep <- function(d, post) {
     delta = d,
     samples = c(
       logistic(post$a + post$b * d), 
-      logistic(post$a + post$instruction + post$b  * d + post$instrbysep * d), 
-      logistic(post$a + post$half + post$b  * d + post$halfbysep  * d),
-      logistic(post$a + post$instruction + post$half + post$halfbyinst + post$b * d + post$instrbysep * d + post$halfbysep * d)))
+      logistic(post$a + post$instruction + post$b * d +
+                        post$instrbysep * d), 
+      logistic(post$a + post$half + post$b * d +
+                        post$halfbysep  * d),
+      logistic(post$a + post$instruction + post$half + post$halfbyinst + 
+                        (post$b + post$threeway) * d + post$instrbysep * d +
+                        post$halfbysep * d)))
 
     return(fx)
 }
@@ -207,6 +211,7 @@ plt <- plt + scale_x_continuous(
 plt <- plt + scale_y_continuous(expand = c(0, 0), limits = c(0, 40))
 ggsave("scratch/plots/joint_model.png", width = 8, height = 3)
 plt
+
 
 #  calculate HDPI
 
