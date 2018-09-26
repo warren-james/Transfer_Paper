@@ -44,7 +44,10 @@ m1 <- map2stan(
     a_p[participant] ~ dnorm(0, sigma_p),
     sigma_p ~ dcauchy(0, 1)),
   data = df,
-  iter = 2000, warmup = 1000, chains = 3, cores = 3)
+  iter = 4000, warmup = 1000, chains = 4, cores = 4)
+
+# save
+save(m1, file = "scratch/models/A_models/m1")
 
 # taking separation in to account, no interactions
 m2 <- map2stan( 
@@ -64,7 +67,10 @@ m2 <- map2stan(
     a_p[participant] ~ dnorm(0, sigma_p),
     sigma_p ~ dcauchy(0, 1)),
   data = df,
-  iter = 2000, warmup = 1000, chains = 3, cores = 3)
+  iter = 4000, warmup = 1000, chains = 4, cores = 4)
+
+# save
+save(m2, file = "scratch/models/A_models/m2")
 
 # taking separation in to account, including interaction with practice effect
 m3 <- map2stan( 
@@ -86,9 +92,10 @@ m3 <- map2stan(
     a_p[participant] ~ dnorm(0, sigma_p),
     sigma_p ~ dcauchy(0, 1)),
   data = df,
-  iter = 2000, warmup = 1000, chains = 3, cores = 3)
+  iter = 4000, warmup = 1000, chains = 4, cores = 4)
 
-
+# save
+save(m3, file = "scratch/models/A_models/m3")
 
 # taking separation in to account, more interactions
 m4 <- map2stan( 
@@ -112,8 +119,10 @@ m4 <- map2stan(
     a_p[participant] ~ dnorm(0, sigma_p),
     sigma_p ~ dcauchy(0, 1)),
   data = df,
-  iter = 2000, warmup = 1000, chains = 3, cores = 3)
+  iter = 4000, warmup = 1000, chains = 4, cores = 4)
 
+# save
+save(m4, file = "scratch/models/A_models/m4")
 
 
 # taking separation in to account, more interactions
@@ -140,7 +149,7 @@ m5 <- map2stan(
     a_p[participant] ~ dnorm(0, sigma_p),
     sigma_p ~ dcauchy(0, 1)),
   data = df,
-  iter = 2000, warmup = 1000, chains = 3, cores = 3)
+  iter = 4000, warmup = 1000, chains = 4, cores = 4)
 
 
 # save this model 
@@ -202,13 +211,13 @@ plt
 #  calculate HDPI
 
 # effect of practice
-print(HPDI(logistic(post$a + post$c) - logistic(post$a), prob = 0.95))
+print(HPDI(logistic(post$a + post$half) - logistic(post$a), prob = 0.95))
 
 # effect of instructions
-print(HPDI(logistic(post$a + post$b) - logistic(post$a), prob = 0.95))
+print(HPDI(logistic(post$a + post$instruction) - logistic(post$a), prob = 0.95))
 
 # transfer effect (compared to control group)
-print(HPDI(logistic(post$a + post$b + post$c + post$d) - logistic(post$a + post$c), prob = 0.95))
+print(HPDI(logistic(post$a + post$b + post$half + post$instruction) - logistic(post$a + post$half), prob = 0.95))
 
 
 
