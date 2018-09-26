@@ -169,11 +169,11 @@ post <- extract.samples(m5)
 get_fx_for_sep <- function(d, post) {
   
   fx <- tibble(
-    condition = rep(c(
-      "baseline", 
-      "instructed", 
-      "practice",
-      "transfer"), each = length(post$a)),
+    Condition = rep(c(
+      "Baseline", 
+      "Instructed", 
+      "Practice",
+      "Transfer"), each = length(post$a)),
     delta = d,
     samples = c(
       logistic(post$a + post$b * d), 
@@ -197,18 +197,19 @@ fx <- bind_rows(fx_min_sep, fx_mean_sep, fx_max_sep)
 
 # turn delta in to a labelled factor for plotting
 fx$delta <- as.factor(fx$delta)
-levels(fx$delta) = c("close", "medium", "far")
+levels(fx$delta) = c("Close", "Medium", "Far")
 
-plt <- ggplot(fx, aes(x = samples, fill = condition))
+plt <- ggplot(fx, aes(x = samples, fill = Condition))
 plt <- plt + geom_density(alpha = 0.6)
 plt <- plt + theme_bw()  
 plt <- plt + scale_fill_manual(values = c("#228833", "#CCBB44", "#4477AA", "#CC6677"))
 plt <- plt + facet_wrap(~delta)
 plt <- plt + scale_x_continuous(
-  name = "probablity of correctly responding to target", 
+  name = "Probablity of correctly responding to target", 
   limits = c(0.4,1), expand = c(0,0),
   breaks = c(0.5, 0.75, 1))
 plt <- plt + scale_y_continuous(expand = c(0, 0), limits = c(0, 40))
+plt$labels$y <- "Density"
 ggsave("scratch/plots/joint_model.png", width = 8, height = 3)
 plt
 
