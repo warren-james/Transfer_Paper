@@ -138,11 +138,81 @@ plt_box$labels$fill <- "Condition"
 plt_box 
 
 # save
+# ggsave("scratch/plots/Bayes_box_plots.png",
+#        height = 12,
+#        width = 16,
+#        units = "cm")
+
+#### Using latest model: acc ~ (sep + half + inst)^3 w/random intercepts ####
+# load model m5
+load("scratch/models/models")
+
+# extraxt samples 
+post <- extract.samples(m5)
+
+# get sim data 
+box_plt_dat <- tibble(participant = numeric(),
+                      cond_type = numeric(),
+                      samples = numeric())
+
+# mean separation 
+mean_sep <- mean(df$sep_scaled)
+
+for(ii in 1:24){
+  participant <- rep(ii, length(post$a_p[,ii])*4)
+  fx <- tibble(
+    cond_type = rep(c(
+      "Baseline", 
+      "Instructed", 
+      "Practice",
+      "Transfer"), each = length(post$a_p[,ii])),
+    samples = c(
+      logistic(post$a + post$a_p[,ii] + post$b * mean_sep), 
+      logistic(post$a + post$a_p[,ii] + post$instruction + 
+               post$b * mean_sep), 
+      logistic(post$a + post$a_p[,ii] + post$half + 
+               post$b * mean_sep),
+      logistic(post$a + post$a_p[,ii] + post$instruction +
+               post$half + post$halfbyinst + 
+              (post$b + post$threeway) * mean_sep)))
+  
+  temp <- cbind(participant, fx)
+  box_plt_dat <- rbind(box_plt_dat, temp)
+}
+
+# sort out participant order 
+num_reps <- length(post$a_p[,1])*4
+box_plt_dat$participant <- rep(sequence, each = num_reps)
+
+# make plot 
+plt_box <- ggplot(box_plt_dat, aes(cond_type, samples,
+                                   fill = cond_type))
+plt_box <- plt_box + theme_bw() 
+plt_box <- plt_box + geom_boxplot()
+plt_box <- plt_box + theme(legend.position = "bottom",
+                           strip.background = element_blank(),
+                           strip.text.x = element_blank(),
+                           axis.text.x = element_blank(),
+                           axis.ticks.x = element_blank(),
+                           axis.title.x = element_blank())
+plt_box <- plt_box + facet_wrap(~participant, ncol = 6)
+plt_box <- plt_box + geom_point(data = box_dat_real, 
+                                aes(cond_type, samples),
+                                size = 2)
+plt_box <- plt_box + geom_point(data = box_dat_real,
+                                aes(cond_type, samples,
+                                    colour = cond_type),
+                                size = 1)
+plt_box$labels$y <- "Accuracy"
+plt_box$labels$colour <- "Condition"
+plt_box$labels$fill <- "Condition"
+plt_box 
+
+# save
 ggsave("scratch/plots/Bayes_box_plots.png",
        height = 12,
        width = 16,
        units = "cm")
-
 
 
 
