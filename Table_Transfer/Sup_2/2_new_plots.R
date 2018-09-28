@@ -67,7 +67,6 @@ for(p in levels(df_P1$Participant)){
 rm(m, ss, p, separations, y)
 
 #### Sort out estimates ####
-# this doesn't work...
 acc_sep$Distance <- acc_sep$Distance - 1
 
 # now sort out distances part

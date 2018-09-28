@@ -36,17 +36,9 @@ df_SP$Acc <- df_SP$Accuracy/df_SP$trials
 df_SP$off_set <- log((1-0.01)/0.01)
 
 #### SP: GLM ####
-# doesn't work properly...
-# m = glm(data = df_SP, cbind(Accuracy, trials-Accuracy)~Distance:Participant, binomial)
-# 
-# df_SP$p = predict(m, type = "response")
-
 # make acc_sep
 acc_sep <- tibble(Participant = character(),
                   switch_point = numeric())
-
-# seps
-# seps <- seq(1:25)
 
 # loop through participants data
 for(i in unique(df_SP$Participant)){
@@ -64,7 +56,6 @@ for(i in unique(df_SP$Participant)){
 rm(d,m,i,p,slab_50)
 
 #### Decision Session ####
-#### DS: load in data ####
 # saved as two sessions so we need to combine these 
 df_P2_1 <- read.csv("data/part_2/part2_1.csv")
 df_P2_2 <- read.csv("data/part_2/part2_2.csv")

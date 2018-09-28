@@ -1,17 +1,15 @@
 #### This script is for double blind experiment ####
 # has data for the reaching and throwing task for each paritipant
 # No need to worry about switch points for this data
-# They either did a nothing or the reaching task before the throwing task 
+# They either did nothing or the reaching task before the throwing task 
 
 #### Notes ####
 # for Order: 0 = unprimed. 1 = primed 
 # Position is centred on 0 
 
-#### libraries ####
+#### Packages ####
 library(tidyverse)
 library(ggthemes)
-
-#### Any functions ####
 
 #### Constants ####
 slab_size <- 0.46
@@ -51,9 +49,14 @@ ggsave("scratch/plots/double_blind.png", width = 8, height = 4)
 #NB: unprimed comes first
  
 #### Analyses ####
-#### Analyses: t.tests... ugh ####
+#### Analyses: Standing position ####
 # first just a simple t.test of position 
 t_test_dat <- df[df$Hoop.dist == 13 | df$Hoop.dist == 5,]
+
+# sort data for t.test 
+t_test_dat <- t_test_dat %>%
+  group_by(Participant, Order, Hoop.dist) %>%
+  summarise(Participant.pos = mean(Participant.pos))
 
 # try just large hoops 
 large <- t_test_dat[t_test_dat$Hoop.dist == "13",]
@@ -66,53 +69,23 @@ t.test(large$Participant.pos ~ large$Order)
 # small 
 t.test(small$Participant.pos ~ small$Order)
 
-# try lm?
-anova(lm(Participant.pos ~ Hoop.dist + Order,
-         data = t_test_dat))
-
-# try difference value 
-small <- select(small,
-                Participant, 
-                Order, 
-                Hoop.dist, 
-                Participant.pos)
-
-colnames(small) <-  c("Participant",
-                      "Order",
-                      "Close_hoop",
-                      "Participant.Pos")
-
-small <- small %>%
-  group_by(Participant, Order, Close_hoop) %>%
-  summarise(avg_pos_close = mean(Participant.Pos))
-
-large <- select(large,
-                Participant, 
-                Order, 
-                Hoop.dist, 
-                Participant.pos)
-
-colnames(large) <-  c("Participant",
-                      "Order",
-                      "Far_hoop",
-                      "Participant.Pos")
-
-large <- large %>%
-  group_by(Participant, Order, Far_hoop) %>%
-  summarise(avg_pos_far = mean(Participant.Pos))
-
-
-# This is what Mellissa did 
-Both <- merge(small, large)
-Both$Difference <- Both$avg_pos_far - Both$avg_pos_close
-
 # tidy 
 rm(small, large)
 
-t.test(Both$Difference ~ Both$Order)
-# gives the same results as mellisa
+#### Analyses: Difference scores ####
+diff_test <- t_test_dat %>%
+  group_by(Participant, Order) %>%
+  spread(Hoop.dist, Participant.pos) %>%
+  setNames(c("Partiticpant", "Order", "Close_hoop", "Far_hoop"))
 
-#### remake box_plots with this data ####
+# calculate difference scores
+diff_test$Difference <- diff_test$Far_hoop - diff_test$Close_hoop 
+
+# test difference
+t.test(diff_test$Difference ~ diff_test$Order,
+       var.equal = T)
+
+#### Box_plots for difference ####
 # make plot 
 plt <- ggplot(Both, aes(Order, Difference,
                         colour = Order))
@@ -126,25 +99,3 @@ plt
 
 # save 
 ggsave("scratch/plots/box_plot.png")
-
-#### Analyses: glm? ####
-# might need to remove points above 1 if we want to do this properly?
-glm_dat <- df[df$Participant.pos <= 1,]
-
-# run first model with just hoop distance
-# NB: CAREFUL, check how to incorporate continuous variables
-# - Also want to include random effects but it doesn't like it
-m1 <- glm(Participant.pos ~ Hoop.dist, 
-          data = glm_dat, family = binomial())
-
-# now add in order
-m1.1 <- glm(Participant.pos ~ Hoop.dist + Order, 
-            data = glm_dat, family = binomial())
-
-# Try using glmer as well to get random effects 
-m2 <- glmer(Participant.pos ~ Hoop.dist + (1|Participant),
-            data = glm_dat, family = binomial())
-
-
-
-
