@@ -1,4 +1,4 @@
-#### For Josephine ####
+#### Non-naive participants ####
 
 #### libraries needed ####
 library(tidyverse)
@@ -8,11 +8,10 @@ library(tidyverse)
 get_VisDegs <- function(x,y){
   (2*atan2(x,(2*y)))*(180/pi)
 }
-ppcm <- 1920/54
-
 
 #### Constants ####
 Screen_dist <- 53
+ppcm <- 1920/54
 
 #### load in data ####
 load("scratch/switch_nar_data")
@@ -22,48 +21,31 @@ df_part2 <- switch_df[switch_df$part == 2,]
 
 #### make plots ####
 # setup data.frame/tibble for plots
-# centre proportions
-temp <- group_by(df_part2, participant,separation)
-centre_prop <- summarise(temp, prop_fixated = mean(centre))
-centre_prop$box <- "centre"
-
-# side proportions
-side_prop <- summarise(temp, prop_fixated = 1 - mean(centre))
-side_prop$box <- "side"
-
-# tidy
-rm(temp)
-
-# merge data
-plt_dat <- rbind(centre_prop, side_prop)
-
-# tidy 
-rm(centre_prop, side_prop)
+plt_dat <- df_part2 %>%
+  group_by(participant, separation) %>%
+  summarise(centre_prop = mean(centre),
+            side_prop = 1 - mean(centre)) %>%
+  gather(3:4, 
+         key = box, 
+         value = prop_fixated) %>%
+  separate(box, c("box", "remove"), "_") %>%
+  select(-remove)
 
 # Add in block to look at this
-temp <- group_by(df_part2, participant,separation, block)
-centre_prop <- summarise(temp, prop_fixated = mean(centre))
-centre_prop$box <- "centre"
-
-# side proportions
-side_prop <- summarise(temp, prop_fixated = 1 - mean(centre))
-side_prop$box <- "side"
-
-# tidy
-rm(temp)
-
-# merge data
-plt_dat_blk <- rbind(centre_prop, side_prop)
-
-# tidy 
-rm(centre_prop, side_prop)
+plt_dat_blk <- df_part2 %>%
+  group_by(participant, separation, block) %>%
+  summarise(centre_prop = mean(centre),
+            side_prop = 1 - mean(centre)) %>%
+  gather(4:5, 
+         key = box, 
+         value = prop_fixated) %>%
+  separate(box, c("box", "remove"), "_") %>%
+  select(-remove)
 
 # need to add switch point data back in 
-temp <- group_by(df_part2, participant)
-switch_points <- summarise(temp, switch_point = unique(switch_point))
-
-# tidy 
-rm(temp)
+switch_points <- df_part2 %>%
+  group_by(participant) %>%
+  summarise(switch_point = unique(switch_point))
 
 #### Stacked plots ####
 # now to make the plots 
@@ -142,16 +124,12 @@ prop_dot_blk
 
 
 #### PLOTS: w/ visual degrees? ####
-side_fixations$separation_deg <- get_VisDegs(as.numeric(side_fixations$separation)/ppcm, Screen_dist)
-switch_points$switch_point_deg <- get_VisDegs(as.numeric(switch_points$switch_point)/ppcm, Screen_dist)
-
-# make plot
 prop_dot <- ggplot(data = side_fixations, 
-                   aes(x = separation_deg,
+                   aes(x = get_VisDegs(as.numeric(separation)/ppcm, Screen_dist),
                        y = prop_fixated))
 prop_dot <- prop_dot + geom_point()
 prop_dot <- prop_dot + geom_vline(data = switch_points,
-                                  aes(xintercept = as.numeric(switch_point_deg)), 
+                                  aes(xintercept = get_VisDegs(as.numeric(switch_point)/ppcm, Screen_dist)), 
                                   linetype = "dashed")
 if(length(unique(side_fixations$participant)) > 1){
   prop_dot <- prop_dot + facet_wrap(~participant)
@@ -165,7 +143,7 @@ prop_dot
 ggsave("scratch/plots/Part2_VA.pdf")
 
 
-#### Make plot for Amelia ####
+#### Make plot for Paper ####
 # sort out line(s)
 # setup separations
 seps <- seq(min(side_fixations$separation), max(side_fixations$separation), 0.5)
@@ -215,67 +193,3 @@ ggsave("scratch/plots/Part_2_plots.png")
 
 # save side_fixations too 
 save(side_fixations, file = "scratch/side_fixations")
-
-#### Need to check the below part works... ####
-
-
-
-
-
-
-
-
-
-#### boxplots of accuracy ####
-# make boxplot data
-temp <- group_by(switch_df, participant, condition)
-box_dat <- summarise(temp, correct = mean(correct))
-
-# tidy 
-rm(temp)
-
-# make plots 
-box_plt <- ggplot(box_dat, 
-                   aes(condition, 
-                       correct))
-box_plt <- box_plt + geom_boxplot()
-
-#### compare: first half and tutorial ####
-fh_tut <- rbind(inst_tut, no_inst_1)
-
-# set data for boxplts 
-temp <- group_by(fh_tut,
-                 participant,
-                 condition)
-ftut_box_dat <- summarise(temp,
-                          correct = mean(correct))
-
-# tidy 
-rm(temp)
-
-# make plots 
-ftut_box_plt <- ggplot(ftut_box_dat, 
-                       aes(condition, 
-                           correct))
-ftut_box_plt <- ftut_box_plt + geom_boxplot()
-
-#### compare: second half and task ####
-sh_tas <- rbind(inst_tas, no_inst_2)
-
-# set data for boxplts 
-temp <- group_by(sh_tas,
-                 participant,
-                 condition)
-stas_box_dat <- summarise(temp,
-                          correct = mean(correct))
-
-# tidy 
-rm(temp)
-
-# make plots 
-stas_box_plt <- ggplot(stas_box_dat, 
-                       aes(condition, 
-                           correct))
-stas_box_plt <- stas_box_plt + geom_boxplot()
-
-rm(list = ls())

@@ -4,8 +4,6 @@
 #### libraries ####
 library(tidyverse)
 
-#### any functions ####
-
 #### Notes/constants ####
 slab_size <- 0.46
 
@@ -60,16 +58,13 @@ for(x in levels(df_part1$Participant)){
   switch_points = rbind(switch_points, data.frame(Participant = x,
                                                   switch_slab = switch_slab))
   acc_sep = rbind(acc_sep, data.frame(Participant = x,
-                                      Slab = seq(0:47),
+                                      Slab = c(0:47),
                                       pred_Acc = p))
   
 }
 
 # tidy 
 rm(m, ss, p, switch_slab, x)
-
-# make acc_sep$Slab right 
-acc_sep$Slab <- acc_sep$Slab - 1
 
 # save acc_sep and switch_slabs
 save(acc_sep, file = "scratch/acc_sep")
@@ -295,7 +290,6 @@ colnames(df) <- c("Participant",
                   "Optimal")
 
 #### Accuracy plots ####
-# need to reshape this, using gather() from tidyverse 
 df <- gather(df, Acc_type, Accuracy, Actual:Optimal, factor_key = T)
 
 # save this 
@@ -323,17 +317,12 @@ acc_plt <- acc_plt + geom_area(data = plt_dat[plt_dat$Acc_type == "Optimal",],
                                    Accuracy),
                                fill = "blue",
                                alpha = 0.4)
-# acc_plt <- acc_plt + geom_area(data = Opt_sep, 
-#                                aes(Hoop_Pos*slab_size,
-#                                    Accuracy),
-#                                fill = "blue",
-#                                alpha = 0.4)
 acc_plt <- acc_plt + geom_area(data = plt_dat[plt_dat$Acc_type == "Centre",],
                                aes(Hoop_Pos*slab_size,
                                    Accuracy),
                                fill = "red",
                                alpha = 0.4)
-acc_plt <- acc_plt + geom_line(data = plt_dat[plt_dat$Acc_type == "Expected",],
+acc_plt <- acc_plt + geom_line(data = plt_dat[plt_dat$Acc_type == "Actual",], 
                                size = 1)
 acc_plt <- acc_plt + facet_wrap(~Participant)
 acc_plt <- acc_plt + theme(strip.background = element_blank(),
@@ -348,7 +337,7 @@ acc_plt
 
 #### make some boxplots as well ####
 # can use same dataset but subset 
-bx_plt_dat <- plt_dat[plt_dat$Acc_type == "Expected" |
+bx_plt_dat <- plt_dat[plt_dat$Acc_type == "Actual" |
                         plt_dat$Acc_type == "Optimal",]
 
 box_plt <- ggplot(bx_plt_dat, aes(Acc_type, Accuracy, 

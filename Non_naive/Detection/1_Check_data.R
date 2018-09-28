@@ -1,4 +1,4 @@
-#### for Josephine ####
+#### Non-naive participants ####
 
 #### libraries needed ####
 library(tidyverse)

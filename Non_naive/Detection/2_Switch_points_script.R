@@ -1,8 +1,4 @@
-#### Add in switch points ####
-# Level 4 Thesis by Elle 
-# 2017/18
-# Written by Warren James
-# This script adds in the optimal switch points
+#### Non-naive participants ####
 
 #### libraries needed ####
 library(tidyverse)
@@ -36,7 +32,7 @@ for (f in results_files){
   # now input this information
   switch_df[count,] <- c(temp[2], d)
   
-  # increas the count 
+  # increase the count 
   count <- count + 1
   
 }
@@ -53,7 +49,6 @@ rm(df)
 
 #### Create column for whether they made the optimal choice or not ####
 # Make side vs centre first 
-# Think this is right, check the script though
 # 1 = centre, 2 & 3 = sides
 switch_df$centre <- 0
 switch_df$centre[switch_df$fixated_box == 1] <- 1

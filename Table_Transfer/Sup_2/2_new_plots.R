@@ -59,7 +59,7 @@ for(p in levels(df_P1$Participant)){
   
   # bind this to acc_sep
   acc_sep <- rbind(acc_sep, data.frame(Participant = p, 
-                                       Distance = seq(0:50), 
+                                       Distance = c(0:50), 
                                        pred_acc = y))
 }
 
@@ -67,8 +67,6 @@ for(p in levels(df_P1$Participant)){
 rm(m, ss, p, separations, y)
 
 #### Sort out estimates ####
-acc_sep$Distance <- acc_sep$Distance - 1
-
 # now sort out distances part
 north_acc <- acc_sep
 colnames(north_acc) <- c("Participant",
@@ -90,17 +88,13 @@ rm(north_acc, south_acc)
 df_P2$Exp_acc <- (df_P2$pred_north + df_P2$pred_south)/2
 
 # remove unused columns 
-df_P2 <- select(df_P2, 
-                Participant,
-                Trial,
-                Position,
-                Accuracy,
-                Condition,
-                Session,
-                hoop_dist,
-                Norm_pos,
-                switch_point,
-                Exp_acc)
+df_P2 <- df_P2 %>%
+  select(-c(pred_north,
+            pred_south,
+            Colour,
+            Direction,
+            South_dist,
+            North_dist))
 
 # now sort out Optimal standing pos 
 df_P2$opt_pos <- 0 
@@ -110,18 +104,8 @@ df_P2$Opt_acc <- df_P2$Exp_acc
 df_P2$Opt_acc[df_P2$opt_pos == 1] <- 0.5
 
 # again, reduce data set 
-df_P2 <- select(df_P2, 
-                Participant,
-                Trial,
-                Position,
-                Accuracy,
-                Condition,
-                Session,
-                hoop_dist,
-                Norm_pos,
-                switch_point,
-                Exp_acc,
-                Opt_acc)
+df_P2 <- df_P2 %>%
+  select(-opt_pos)
 
 #### PLOTS ####
 #### PLOTS: Each session accuracy ####
@@ -143,6 +127,7 @@ plt <- plt + theme_bw()
 plt <- plt + geom_point()
 plt <- plt + geom_abline(intercept = 0, slope = 1)
 plt <- plt + scale_color_ptol()
+# plt <- plt + theme(legend.position = "none")
 plt <- plt + facet_wrap(~ Session)
 plt
 
@@ -167,6 +152,7 @@ plt2 <- plt2 + theme_bw()
 plt2 <- plt2 + geom_point()
 plt2 <- plt2 + scale_color_ptol()
 plt2 <- plt2 + geom_line(aes(group = Participant))
+# plt2 <- plt2 + theme(legend.position = "bottom")
 plt2$labels$x <- "Delta (metres)"
 plt2$labels$y <- "Normalise standing position"
 plt2

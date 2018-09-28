@@ -1,7 +1,7 @@
 #### Putting second session plots together ####
 # retrieve the data, make the plots, put them side by side 
 
-#### Libraries ####
+#### Packages ####
 library(tidyverse)
 library(gridExtra)
 
@@ -73,5 +73,7 @@ plt <- plt + theme(strip.background = element_blank(),
                    strip.text.x = element_blank(),
                    text = element_text(size = 12))
 plt <- plt + facet_wrap(~Participant, nrow = 1)
-ggsave("throwing_task.pdf", width = 8, height = 2.5)
-ggsave("throwing_task.png", width = 8, height = 2.5)
+plt
+
+# save
+# ggsave("throwing_task.png", width = 8, height = 2.5)

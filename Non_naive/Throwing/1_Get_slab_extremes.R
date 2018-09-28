@@ -8,8 +8,6 @@
 #### load libraries ####
 library(tidyverse)
 
-#### any functions ####
-
 #### read in data ####
 results_files <- dir("data/Part1/")
 
