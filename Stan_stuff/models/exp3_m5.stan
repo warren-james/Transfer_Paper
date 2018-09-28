@@ -12,6 +12,7 @@ parameters {
   vector[S] subj_c;            // rand Intercepts by subj
   real b_i;                    // Main effect inst
   real b_h;                    // Main effect half
+  real b_hi;                   // Interaction of half and inst
   real<lower = 0> sigma_subj;  // sd for subj implied uniform
 }
 
@@ -23,10 +24,12 @@ model {
   subj_c ~ normal(0,sigma_subj);  // subj random effects?
   b_i ~ normal(0,1);
   b_h ~ normal(0,1);
+  b_hi ~ normal(0,1); 
 
   // likelihood
   for(n in 1:N) {
-      mu = c + subj_c[subj[n]] + b_i * inst[n] + b_h * half[n];
+      mu = c + subj_c[subj[n]] + b_i * inst[n] + b_h * half[n] + 
+           b_hi * half[n] * inst[n];
       acc[n] ~ bernoulli_logit(fmax(0.5, mu));
   }
 }

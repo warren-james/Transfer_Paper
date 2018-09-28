@@ -140,4 +140,23 @@ m5 <- stan(
 # save 
 save(m5, file = "scratch/model_outputs/m5")
 
+#### acc ~ delta + inst + half /w random intercepts ####
+stan_df <- list(
+  N = nrow(df),
+  inst = df$given_instruction,
+  acc = df$correct,
+  delta = df$sep_scaled,
+  half = df$second_half,
+  S = length(unique(df$participant)),
+  subj = df$participant
+)
 
+# run model
+m6 <- stan(
+  file = "models/exp3_m6.stan", 
+  data = stan_df,
+  chains = 1,
+  warmup = 1000,
+  iter = 2000,
+  refresh = 100
+)
