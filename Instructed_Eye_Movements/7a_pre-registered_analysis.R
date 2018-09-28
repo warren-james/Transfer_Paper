@@ -46,9 +46,6 @@ rm(switch_df)
 #### ANALYSIS ####
 #### ANALYSIS: Difference session 2 ####
 
-# NB: For all the t.tests, you should put var.equal = T so as to use the standard student's t-test
-# This stops it correcting the df otherwise it applies the Welch correction
-
 # Get a difference score for second half sessions for both groups. Then compare these together.
 # Smaller values means closer to the optimal accuracy level.
 
@@ -70,20 +67,11 @@ dat_analysis$difference <- dat_analysis$Opt_Accuracy - dat_analysis$Act_Accuracy
 dat_analysis_1 <- dat_analysis[dat_analysis$half == "second",]
 
 # now do t-test 
+# comparing difference from optimal across conditions
 t_test_diff_1 <- t.test(dat_analysis_1$difference ~
                           dat_analysis_1$condition,
                         # alternative = c("less"),
                         var.equal = T)
-# not sig, but we know that from the bayesian regression model 
-
-# Try with expected?
-dat_analysis_1$difference_2 <- dat_analysis_1$Opt_Accuracy - dat_analysis_1$Exp_Accuracy
-
-# try test again 
-t_test_diff_1_1 <- t.test(dat_analysis_1$difference_2 ~ 
-                            dat_analysis_1$condition,
-                          # alternative = c("greater"),
-                          var.equal = T)
 
 #### ANALYSIS: Difference for session 1 ####
 # same as above, but for first session 
@@ -94,8 +82,6 @@ t_test_diff_2 <- t.test(dat_analysis_2$difference ~
                           dat_analysis_2$condition,
                         # alternative = c("greater"),
                         var.equal = T)
-# This is significant though...
-
 
 #### ANALYSIS: Practice effects ####
 # just use "No_instructions" group and compare accross halves 
@@ -106,8 +92,6 @@ t_test_prac <- t.test(dat_analysis_3$difference ~
                         dat_analysis_3$half,
                       # alternative = c("greater"),
                       var.equal = T)
-# This isn't sig... so no real practice effects present
-# but the bayes model shows a better picture anyway 
 
 #### PLOTS ####
 #### PLOT: Morvan and Maloney (2012) figure 6-like plot ####
@@ -134,10 +118,7 @@ levels(plt_data$condition) <- c("Primed", "Control")
 plt_data$condition <- factor(plt_data$condition,
                              levels(plt_data$condition)[c(2,1)])
 
-# can use Expected instead of Actual... but due to a slight difference
-# in accuracy calculations for the switch points, this would
-# make it look like some participants weren't as good as optimal...
-# plot
+# make plot
 plt <- ggplot(plt_data, aes(Optimal, Actual,
                             colour = condition))
 plt <- plt + theme_bw()
@@ -169,7 +150,6 @@ plt2_data$Side <- 1 - plt2_data$Centre
 
 # sort out factors 
 plt2_data$condition <- as.factor(plt2_data$condition)
-# plt2_data$half <- as.factor(plt2_data$half)
 
 # rename levels
 levels(plt2_data$condition) <- c("Primed", "Control")

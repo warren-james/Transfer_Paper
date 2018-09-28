@@ -1,7 +1,4 @@
 #### Plotting Script #### 
-# Level 4 Thesis by Elle
-# 2017/18
-# Written by Warren James
 # Script used to make plots of proportion of fixations 
 # made to the centre or side box(es)
 
@@ -45,22 +42,15 @@ df_part2 <- switch_df[switch_df$part == 2,]
 #### make plots ####
 # setup data.frame/tibble for plots
 # centre proportions
-temp <- group_by(df_part2, participant,separation,condition)
-centre_prop <- summarise(temp, prop_fixated = mean(centre))
-centre_prop$box <- "centre"
-
-# side proportions
-side_prop <- summarise(temp, prop_fixated = 1 - mean(centre))
-side_prop$box <- "side"
-
-# tidy
-rm(temp)
-
-# merge data
-plt_dat <- rbind(centre_prop, side_prop)
-
-# tidy 
-rm(centre_prop, side_prop)
+plt_dat <- df_part2 %>%
+  group_by(participant, separation, condition) %>%
+  summarise(centre_prop = mean(centre),
+            side_prop = 1 - mean(centre)) %>%
+  gather(4:5,
+         key = box,
+         value = prop_fixated) %>%
+  separate(box, c("box", "remove"), "_") %>%
+  select(-remove)
 
 # need to add switch point data back in 
 switch_points <- df_part2 %>%
@@ -164,7 +154,7 @@ dot_plt
 # tidy 
 rm(plt_dat, side_fix_dat)
 
-#### Make plots for Amelia talk/publications ####
+#### Make plots for paper ####
 switch_df$half <- "First"
 switch_df$half[switch_df$block > 4] <- "Second"
 
@@ -172,31 +162,6 @@ switch_df$half[switch_df$block > 4] <- "Second"
 side_prop <- switch_df %>% 
   group_by(participant, separation, condition, half) %>%
   summarise(prop_fixated = 1 - mean(centre))
-
-# sort out line(s)
-# setup separations
-# seps <- seq(min(side_prop$separation), max(side_prop$separation), 0.5)
-# 
-# # setup new dataframe
-# opt_fixations <- tibble(participant = character(),
-#                         condition = character(),
-#                         separation = numeric(),
-#                         fix_location = numeric())
-# 
-# for(i in unique(switch_df$participant)){
-#   d <- switch_df[switch_df$participant == i,]
-#   for(x in seps){
-#     if(x < as.numeric(unique(d$switch_point))){
-#       fl <- 0
-#     } else if(x > as.numeric(unique(d$switch_point))){
-#       fl <- 1
-#     }
-#     opt_fixations <- rbind(opt_fixations, data.frame(participant = i,
-#                                                      condition = unique(d$condition),
-#                                                      separation = x,
-#                                                      fix_locations = fl))
-#   }
-# }
 
 # sort side_prop condition labels 
 side_prop$condition <- as.factor(side_prop$condition)
@@ -234,54 +199,19 @@ ggsave("scratch/plots/Part_2_plots.pdf")
 
 #### boxplots of accuracy ####
 # make boxplot data
-temp <- group_by(switch_df, participant, condition)
-box_dat <- summarise(temp, correct = mean(correct))
-
-# tidy 
-rm(temp)
+box_dat <- switch_df %>%
+  group_by(participant, condition, half) %>%
+  summarise(correct = mean(correct))
 
 # make plots 
 box_plt <- ggplot(box_dat, 
                    aes(condition, 
-                       correct))
+                       correct,
+                       colour = half))
 box_plt <- box_plt + geom_boxplot()
+box_plt$labels$x <- "Condition"
+box_plt$labels$y <- "Accuracy"
+box_plt$labels$colour <- "Half"
+box_plt
 
-#### compare: first half and tutorial ####
-fh_tut <- rbind(inst_tut, no_inst_1)
 
-# set data for boxplts 
-temp <- group_by(fh_tut,
-                 participant,
-                 condition)
-ftut_box_dat <- summarise(temp,
-                          correct = mean(correct))
-
-# tidy 
-rm(temp)
-
-# make plots 
-ftut_box_plt <- ggplot(ftut_box_dat, 
-                       aes(condition, 
-                           correct))
-ftut_box_plt <- ftut_box_plt + geom_boxplot()
-
-#### compare: second half and task ####
-sh_tas <- rbind(inst_tas, no_inst_2)
-
-# set data for boxplts 
-temp <- group_by(sh_tas,
-                 participant,
-                 condition)
-stas_box_dat <- summarise(temp,
-                          correct = mean(correct))
-
-# tidy 
-rm(temp)
-
-# make plots 
-stas_box_plt <- ggplot(stas_box_dat, 
-                       aes(condition, 
-                           correct))
-stas_box_plt <- stas_box_plt + geom_boxplot()
-
-rm(list = ls())

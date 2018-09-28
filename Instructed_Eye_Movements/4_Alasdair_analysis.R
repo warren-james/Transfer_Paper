@@ -151,6 +151,8 @@ m5 <- map2stan(
   data = df,
   iter = 4000, warmup = 1000, chains = 4, cores = 4)
 
+# save this 
+save(m5, file = "scratch/models/A_models/m5")
 
 # save this model 
 save(m1, m2, m3, m4, m5, file = "scratch/models/models")

@@ -1,7 +1,4 @@
 #### Add in switch points ####
-# Level 4 Thesis by Elle 
-# 2017/18
-# Written by Warren James
 # This script adds in the optimal switch points
 
 #### libraries needed ####

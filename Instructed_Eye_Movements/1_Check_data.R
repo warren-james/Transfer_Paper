@@ -1,7 +1,4 @@
 #### Script to extract Data ####
-# Level 4 Thesis by Elle
-# 2017/18
-# Script written by Warren James
 # This script reads in the data and produces a file containing 
 # all participants data
 

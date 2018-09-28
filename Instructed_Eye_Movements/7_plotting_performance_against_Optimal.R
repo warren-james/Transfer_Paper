@@ -1,5 +1,4 @@
 #### Instructed eye movements #####
-# written by Warren James
 # this is just to make the new plots using optimal performance compared to actual accuracy 
 
 #### libraries needed ####
