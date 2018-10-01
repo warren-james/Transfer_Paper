@@ -26,18 +26,20 @@ model {
 
   // priors
   c ~ normal(0,1);  
-  subj_c ~ normal(0,sigma_subj);  // subj random effects?
-  b_d ~ normal(0,1);
-  b_i ~ normal(0,1);
-  b_h ~ normal(0,1);
-  b_hd ~ normal(0,1);
-  b_id ~ normal(0,1); 
-  b_hid ~ normal(0,1);
+  subj_c ~ normal(0,sigma_subj);  // random intercepts implied uniform
+  b_d ~ normal(0,1);              // delta slope
+  b_i ~ normal(0,1);              // inst main effect
+  b_h ~ normal(0,1);              // half main effect
+  b_hi ~ normal(0,1);             // half * inst
+  b_hd ~ normal(0,1);             // half * delta
+  b_id ~ normal(0,1);             // inst * delta
+  b_hid ~ normal(0,1);            // threeway
 
   // likelihood
   for(n in 1:N) {
       mu = c + subj_c[subj[n]] + b_d * delta[n] + b_i * inst[n]
-             + b_h * half[n] + b_hi * half[n] * inst[n]
+             + b_h * half[n]
+             + b_hi * half[n] * inst[n]
              + b_hd * half[n] * delta[n]
              + b_id * inst[n] * delta[n]
              + b_hid * half[n] * inst[n] * delta[n];
