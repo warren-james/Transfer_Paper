@@ -1,7 +1,7 @@
 data {
   int<lower = 0> N;                   // number of data points
   int<lower = 0, upper = 1> acc[N];   // Accuracy
-  Vector[N] delta;                    // Separation
+  vector[N] delta;                    // Separation
   int<lower = 0, upper = 1> inst[N];  // Instructions
   int<lower = 0, upper = 1> half[N];  // Half
   int<lower = 0> S;                   // Number of Subjects

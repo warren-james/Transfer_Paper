@@ -155,8 +155,16 @@ stan_df <- list(
 m6 <- stan(
   file = "models/exp3_m6.stan", 
   data = stan_df,
-  chains = 1,
+  chains = 4,
+  cores = 4,
   warmup = 1000,
-  iter = 2000,
+  iter = 4000,
   refresh = 100
 )
+
+# save 
+save(m6, file = "scratch/model_outputs/m6")
+
+
+
+
