@@ -207,7 +207,7 @@ plt <- plt + theme_bw()
 plt <- plt + scale_fill_manual(values = c("#228833", "#CCBB44", "#4477AA", "#CC6677"))
 plt <- plt + facet_wrap(~delta)
 plt <- plt + scale_x_continuous(
-  name = "Probablity of correctly responding to target", 
+  name = "Probability of correctly responding to target", 
   limits = c(0.4,1), expand = c(0,0),
   breaks = c(0.5, 0.75, 1))
 plt <- plt + scale_y_continuous(expand = c(0, 0), limits = c(0, 40))

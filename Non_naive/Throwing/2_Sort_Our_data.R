@@ -91,7 +91,7 @@ plt <- plt + geom_smooth(method=glm,
                          method.args = list(family = "binomial"), 
                          aes(y=pred_Acc),
                          fullrange=T, se=F)
-plt <- plt + facet_wrap(~Participant)
+plt <- plt + facet_wrap(~Participant, ncol = 4)
 plt <- plt + theme(strip.background = element_blank(),
                    strip.text.x = element_blank())
 plt$labels$x <- "Delta (metres)"
