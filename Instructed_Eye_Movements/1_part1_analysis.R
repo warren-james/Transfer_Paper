@@ -19,10 +19,10 @@ fit_detection_curve <- function(df)
 		data = df, 
 		family = "binomial")
 
-	return(tibble(intercept = m$coefficients[1], beta = m$coefficients[2]))
+	return(model = m)
 }
 
-det_fits <- bind_cols('p_id' = p_id, map_df(dat, fit_detection_curve))
+det_fits <- tibble('participant' = p_id, model = map(dat, fit_detection_curve))
 
 rm(dat, p_id)
 
@@ -45,7 +45,42 @@ map_df(files, read_csv,
 		col_names = c("block", "sep", "fixated", "correct")) %>%
 	mutate(
 		participant = rep(p_id, each = 90),
-		condition = rep(condition_code, each = 90)) %>%
-	select(participant, condition, block, sep, fixated, correct) -> dat
+		group = as_factor(rep(condition_code, each = 90)),
+		block = if_else(block < 5, 1, 2)) %>%
+	select(participant, group, block, sep, fixated, correct) -> dat
 
-rm(files, folder)
+rm(files, folder, condition_code)
+
+# simulate
+
+# get expected accuracy for central fixations 
+dat %>% 
+	nest(group, group, block, sep, fixated, correct) %>%
+	full_join(det_fits) -> ldat
+dat$p_centre <- unlist(map2(ldat$model, ldat$data, predict, type = "response"))
+rm(ldat)
+
+# get expected accuracy for side fixations
+dat %>% mutate(sep = 2*sep) %>%
+	nest(group, group, block, sep, fixated, correct, p_centre) %>%
+	full_join(det_fits) -> ldat
+dat$p_side <- unlist(map2(ldat$model, ldat$data, predict, type = "response"))
+dat$p_side <- 0.5 + 0.5 * dat$p_side
+
+# get expected optimal strat and simulate:
+dat %>% mutate(
+	p_optimal =  pmax(p_centre, p_side),
+	sim_acc  = if_else(p_optimal > runif(n = n()), 1, 0)) %>%
+	select(participant, group, block, sep, sim_acc) %>%
+	rename(correct = "sim_acc") %>%
+	mutate(group = "simulated") %>%
+	bind_rows(dat) %>%
+	select(participant, group, block, sep, correct) -> dat
+
+dat %>% group_by(group) %>%
+summarise(mean_acc = mean(correct, na.rm = TRUE))
+
+
+
+
+
