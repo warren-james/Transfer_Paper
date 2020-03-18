@@ -1,4 +1,5 @@
 library(tidyverse)
+library(brms)
 
 ###################################################################
 ## import data from part 1 and fit the psychometric detection curve
@@ -68,6 +69,7 @@ dat$p_side <- unlist(map2(ldat$model, ldat$data, predict, type = "response"))
 dat$p_side <- 0.5 + 0.5 * dat$p_side
 
 # get expected optimal strat and simulate:
+
 dat %>% mutate(
 	p_optimal =  pmax(p_centre, p_side),
 	sim_acc  = if_else(p_optimal > runif(n = n()), 1, 0)) %>%
@@ -75,12 +77,14 @@ dat %>% mutate(
 	rename(correct = "sim_acc") %>%
 	mutate(group = "simulated") %>%
 	bind_rows(dat) %>%
-	select(participant, group, block, sep, correct) -> dat
+	select(participant, group, block, sep, correct) %>%
+	mutate(sep = sep/max(sep) )-> dat
 
 dat %>% group_by(group) %>%
 summarise(mean_acc = mean(correct, na.rm = TRUE))
 
 
+m <- brm(data = dat,
+	correct ~ group * block * sep, family = "bernoulli")
 
-
-
+save(m, file = "m_brms")
