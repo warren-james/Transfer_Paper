@@ -20,7 +20,8 @@ ppcm <- 1920/54
 load("scratch/switch_df")
 
 # Just accuracy data
-load("scratch/Elle_acc_dat")
+load("scratch/Elle_acc_dat") 
+Elle_accuracy_data <- ungroup(Elle_accuracy_data)
 
 # fixations 
 load("scratch/Elle_fix_data")
@@ -103,5 +104,18 @@ ggsave("scratch/plots/line_plot.png")
 
 
 
+### new added 2023
+plt_dat_lines %>%
+  pivot_wider(names_from = "acc_type", values_from = "Accuracy") %>%
+  mutate(half = if_else(half=="first", "first session", "second session"),
+         condition = if_else(condition == "Instructions", "Primed", "Control")) %>%
+  ggplot(aes(Optimal, Actual, colour = condition)) + geom_point() + 
+  facet_wrap(~half) + geom_abline() + 
+  coord_equal() + 
+  scale_x_continuous("optimal accuracy", limits = c(0.7, 0.9)) + 
+  scale_y_continuous("expected accuracy", limits = c(0.7, 0.9)) + 
+  theme_bw() + 
+  ggthemes::scale_color_ptol()
 
+ggsave("scatter_plot.png", width = 6, height = 3)
 
