@@ -15,10 +15,13 @@ library(ggthemes)
 slab_size <- 0.46
 
 #### load in Data ####
-df <- read.csv("data/results.csv")
+df <- read_csv("data/results.csv") %>%
+  rename(Participant.pos = `Participant pos`,
+         Hoop.dist = `Hoop dist`,
+         Hit = `hit/miss`)
 
 # make participant a factor 
-df$Participant <- as.factor(df$Participant)
+df$Participant <- as_factor(df$Participant)
 
 # sort out levels for Order 
 df$Order <- as.factor(df$Order)
@@ -27,20 +30,30 @@ levels(df$Order) <- c("Control", "Primed", "Optimal")
 # Normalise position 
 df$Participant.pos <- abs(df$Participant.pos/df$Hoop.dist)
 
+# reorder participants by the lm slope between hoop pos and standing pos
+m <- lm(Participant.pos ~ 0 + Participant + Participant:Hoop.dist,
+        data = df)
+
+dm <- tibble(Participant = as_factor(1:32), b = m$coefficients[33:64]) %>%
+  mutate(Participant = fct_reorder(Participant, b)) %>%
+  arrange(b)
+
+df %>% mutate(
+  Participant = fct_relevel(Participant, levels = as.character(dm$Participant))) -> df
+
 #### make plots ####
-plt <- ggplot(df, aes(Hoop.dist*slab_size, Participant.pos,
-                      colour = Order))
-plt <- plt + geom_point(alpha = 0.4)
-plt <- plt + theme_bw()
-plt <- plt + facet_wrap(~Order + Participant, ncol = 8)
-plt <- plt + scale_x_continuous(limits = c(1,7))
-plt <- plt + theme_bw()
-plt <- plt + scale_colour_ptol()
-plt <- plt + theme(strip.background = element_blank(),
-                   strip.text.x = element_blank())
-plt <- plt + theme(legend.position = "none")
-plt <- plt + xlab("Delta (Metres)")
-plt <- plt + ylab("Normalised Standing Position")
+plt <- ggplot(df, aes(Hoop.dist*slab_size, Participant.pos)) +
+  geom_point(data = tibble(x = c(2, 4, 4, 6), y = c(0, 0, 1, 1)),
+             aes(x, y), shape  = 4, colour = "black", size = 3 ) + 
+  geom_jitter(aes(colour = Order), height = 0, width = 0.1,  alpha = 0.4) + 
+  facet_wrap(~Participant, ncol = 8) +
+  scale_x_continuous("Delta (Metres)", limits = c(1,7)) +
+  scale_y_continuous("Normalised Standing Position") +
+  theme_bw() +
+  scale_colour_ptol() +
+  theme(strip.background = element_blank(),
+        strip.text.x = element_blank(), 
+        legend.position = "none") 
 plt
 
 # save this 
