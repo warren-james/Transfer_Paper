@@ -1,5 +1,5 @@
 #### This script is for double blind experiment ####
-# has data for the reaching and throwing task for each paritipant
+# has data for the reaching and throwing task for each participant
 # No need to worry about switch points for this data
 # They either did nothing or the reaching task before the throwing task 
 
@@ -10,7 +10,14 @@
 #### Packages ####
 library(tidyverse)
 library(ggthemes)
+library(brms)
+library(tidybayes)
+library(patchwork)
 
+options(mc.cores = 8, 
+        digits = 2)
+
+theme_set(theme_minimal())
 #### Constants ####
 slab_size <- 0.46
 
@@ -25,7 +32,7 @@ df$Participant <- as_factor(df$Participant)
 
 # sort out levels for Order 
 df$Order <- as.factor(df$Order)
-levels(df$Order) <- c("Control", "Primed", "Optimal")
+#levels(df$Order) <- c("Control", "Primed", "Optimal")
 
 # Normalise position 
 df$Participant.pos <- abs(df$Participant.pos/df$Hoop.dist)
@@ -43,7 +50,7 @@ df %>% mutate(
 
 #### make plots ####
 plt <- ggplot(df, aes(Hoop.dist*slab_size, Participant.pos)) +
-  geom_point(data = tibble(x = c(2, 4, 4, 6), y = c(0, 0, 1, 1)),
+  geom_point(data = tibble(x = c(2, 6), y = c(0, 1)),
              aes(x, y), shape  = 4, colour = "black", size = 3 ) + 
   geom_jitter(aes(colour = Order), height = 0, width = 0.1,  alpha = 0.4) + 
   facet_wrap(~Participant, ncol = 8) +
@@ -59,56 +66,129 @@ plt
 # save this 
 ggsave("scratch/plots/double_blind.png", width = 8, height = 4)
  
-#NB: unprimed comes first
- 
 #### Analyses ####
-#### Analyses: Standing position ####
-# first just a simple t.test of position 
-t_test_dat <- df[df$Hoop.dist == 13 | df$Hoop.dist == 5,]
 
-# sort data for t.test 
-t_test_dat <- t_test_dat %>%
-  group_by(Participant, Order, Hoop.dist) %>%
-  summarise(Participant.pos = mean(Participant.pos))
+# model how relative error varies with Delta (near v far) and group
 
-# try just large hoops 
-large <- t_test_dat[t_test_dat$Hoop.dist == "13",]
-small <- t_test_dat[t_test_dat$Hoop.dist == "5",]
+df %>% filter(Hoop.dist %in% c(5, 13)) %>%
+  mutate(hoops = if_else(Hoop.dist == 5, "near", "far"),
+         hoops = as_factor(hoops),
+         err = if_else(hoops == "near", Participant.pos, 1-Participant.pos),
+         err = abs(err)) -> df
 
-# now do the t.test
-# large
-t.test(large$Participant.pos ~ large$Order)
+ggplot(df, aes(Participant.pos, fill = hoops)) + geom_histogram() 
 
-# small 
-t.test(small$Participant.pos ~ small$Order)
+my_priors <- c(prior(normal(0, 1), class = sd),
+               prior(normal(0, 1), class = b),
+               prior(normal(0, 1), class = sd, nlpar = "hu"),
+               prior(normal(0, 1), class = b, nlpar = "hu"))
 
-# tidy 
-rm(small, large)
+m <- brm(bf(Participant.pos ~ 0 + hoops:Order + (0 + hoops:Order | Participant),
+            hu ~ 0 + hoops:Order + (0 + hoops:Order | Participant)), 
+         data = df,
+         family = hurdle_lognormal(),
+         prior = my_priors,
+         backend = "cmdstanr")
 
-#### Analyses: Difference scores ####
-diff_test <- t_test_dat %>%
-  group_by(Participant, Order) %>%
-  spread(Hoop.dist, Participant.pos) %>%
-  setNames(c("Partiticpant", "Order", "Close_hoop", "Far_hoop"))
+# plot posterior
 
-# calculate difference scores
-diff_test$Difference <- diff_test$Far_hoop - diff_test$Close_hoop 
+df %>% modelr::data_grid(hoops, Order) %>%
+  add_predicted_draws(m, re_formula = NA, value = "error") %>%
+  ggplot(aes(error, fill = Order)) +
+  geom_density(alpha = 0.5) + 
+  facet_grid(.~hoops) + 
+  ggthemes::scale_color_few() + 
+  ggthemes::scale_fill_few() 
 
-# test difference
-t.test(diff_test$Difference ~ diff_test$Order,
-       var.equal = T)
+m %>% gather_draws(`[b|hu]_.*`, regex = TRUE) %>%
+  mutate(param = if_else(str_detect(.variable, "hu"), "hu", "b"),
+         .variable = str_remove(.variable, "b_(hu_)*"),
+         .variable = str_remove_all(.variable, "hoops|Order")) %>%
+  separate(.variable, into = c("hoops", "group"), sep = ":") %>%
+  mutate(hoops = as_factor(hoops), 
+         hoops = fct_relevel(hoops, "near")) -> post
 
-#### Box_plots for difference ####
-# make plot 
-plt <- ggplot(Both, aes(Order, Difference,
-                        colour = Order))
-plt <- plt + geom_boxplot()
-plt <- plt + theme_bw()
-plt <- plt + theme(legend.position = "none")
-plt <- plt + scale_y_continuous(limits = c(-0.4, 1))
-plt$labels$y <- "Change in Standing Position"
-plt$labels$x <- "Group"
-plt
 
-# save 
-ggsave("scratch/plots/box_plot.png")
+
+##########
+# first, looo at pr(central)
+##########
+
+df %>% group_by(Participant, hoops, Order) %>%
+  summarise(Prc = mean(Participant.pos == 0)) -> df_prc
+
+
+post %>% filter(param == "hu") %>%
+  mutate(p = plogis(.value)) %>%
+  rename(hu = ".value") %>%
+  select(-param) -> post_hu
+
+ggplot(post_hu, aes(hoops, p, colour = group)) + 
+  stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
+  scale_y_continuous("Pr(stand at central position)") +
+  geom_jitter(data = df_prc, aes(hoops, Prc, colour = Order), 
+             shape = 4, height = 0, width = 0.1) + 
+  scale_colour_ptol() +
+  scale_fill_ptol() -> plt_hu
+
+post %>% filter(param == "b") %>%
+  mutate(pos = exp(.value)) %>%
+  rename(b = ".value") %>%
+  select(-param) -> post_b
+
+df %>% group_by(Participant, hoops, Order) %>%
+  filter(Participant.pos > 0) %>%
+  summarise(pos = mean(Participant.pos))-> df_pos
+
+
+ggplot(post_b, aes(hoops, pos, colour = group)) + 
+  stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
+  scale_y_continuous("normalised distance from centre") +
+  geom_jitter(data = df_pos, aes(hoops, pos, colour = Order),
+             shape = 4, height = 0, width = 0.1) + 
+  scale_colour_ptol() +
+  scale_fill_ptol() -> plt_b
+
+plt_hu + plt_b + plot_layout(guides = "collect")
+
+
+# are there differences between conditions?
+
+# first, central standing?
+post_hu %>% select(-p) %>% 
+  pivot_wider(names_from = "group", values_from = "hu") %>%
+  mutate(Difference = Primed - Control) %>%
+  pivot_longer(c("Control", "Primed", "Difference"), names_to = "group", values_to = "hu") -> post_hu_d
+
+post_hu_d %>%
+  ggplot(aes(hu, fill = group)) +
+  geom_density(alpha = 0.33) + 
+  geom_vline(xintercept = 0, linetype = 2) + 
+  facet_grid(.~hoops) +
+  scale_fill_ptol() -> plt_hu_d
+
+post_hu_d %>% group_by(group, hoops) %>%
+  median_hdci(hu) %>%
+  knitr::kable()
+
+# and now non-central standing
+post_b %>% select(-pos) %>% 
+  pivot_wider(names_from = "group", values_from = "b") %>%
+  mutate(Difference = Primed - Control) %>%
+  pivot_longer(c("Control", "Primed", "Difference"), names_to = "group", values_to = "b") -> post_b_d
+
+post_b_d %>%
+  ggplot(aes(b, fill = group)) +
+  geom_density(alpha = 0.33) + 
+  geom_vline(xintercept = 0, linetype = 2) + 
+  facet_grid(.~hoops) +
+  scale_fill_ptol()-> plt_b_d
+
+post_b_d %>% group_by(group, hoops) %>%
+  median_hdci(b) %>%
+  knitr::kable()
+
+(plt_hu + plt_b) / (plt_hu_d + plt_b_d) +  plot_layout(guides = "collect")
+
+
+
