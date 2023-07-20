@@ -2,7 +2,6 @@
 # has data for the reaching and throwing task for each participant
 # No need to worry about switch points for this data
 # They either did nothing or the reaching task before the throwing task 
-
 #### Notes ####
 # for Order: 0 = unprimed. 1 = primed 
 # Position is centred on 0 
@@ -32,7 +31,7 @@ df$Participant <- as_factor(df$Participant)
 
 # sort out levels for Order 
 df$Order <- as.factor(df$Order)
-#levels(df$Order) <- c("Control", "Primed", "Optimal")
+levels(df$Order) <- c("Control", "Primed") # , "Optimal"
 
 # Normalise position 
 df$Participant.pos <- abs(df$Participant.pos/df$Hoop.dist)
@@ -64,7 +63,7 @@ plt <- ggplot(df, aes(Hoop.dist*slab_size, Participant.pos)) +
 plt
 
 # save this 
-ggsave("scratch/plots/double_blind.png", width = 8, height = 4)
+ggsave("scratch/plots/double_blind.png", width = 8, height = 3.2)
  
 #### Analyses ####
 
@@ -76,18 +75,17 @@ df %>% filter(Hoop.dist %in% c(5, 13)) %>%
          err = if_else(hoops == "near", Participant.pos, 1-Participant.pos),
          err = abs(err)) -> df
 
-ggplot(df, aes(Participant.pos, fill = hoops)) + geom_histogram() 
-
 my_priors <- c(prior(normal(0, 1), class = sd),
                prior(normal(0, 1), class = b),
-               prior(normal(0, 1), class = sd, nlpar = "hu"),
-               prior(normal(0, 1), class = b, nlpar = "hu"))
+               prior(normal(0, 1), class = sd, dpar = "hu"),
+               prior(normal(0, 1), class = b, dpar = "hu"))
 
 m <- brm(bf(Participant.pos ~ 0 + hoops:Order + (0 + hoops:Order | Participant),
             hu ~ 0 + hoops:Order + (0 + hoops:Order | Participant)), 
          data = df,
          family = hurdle_lognormal(),
          prior = my_priors,
+         iter = 5000,
          backend = "cmdstanr")
 
 # plot posterior
@@ -109,7 +107,6 @@ m %>% gather_draws(`[b|hu]_.*`, regex = TRUE) %>%
          hoops = fct_relevel(hoops, "near")) -> post
 
 
-
 ##########
 # first, looo at pr(central)
 ##########
@@ -126,8 +123,8 @@ post %>% filter(param == "hu") %>%
 ggplot(post_hu, aes(hoops, p, colour = group)) + 
   stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
   scale_y_continuous("Pr(stand at central position)") +
-  geom_jitter(data = df_prc, aes(hoops, Prc, colour = Order), 
-             shape = 4, height = 0, width = 0.1) + 
+  # geom_jitter(data = df_prc, aes(hoops, Prc, colour = Order), 
+  #            shape = 4, height = 0, width = 0.1) + 
   scale_colour_ptol() +
   scale_fill_ptol() -> plt_hu
 
@@ -144,51 +141,70 @@ df %>% group_by(Participant, hoops, Order) %>%
 ggplot(post_b, aes(hoops, pos, colour = group)) + 
   stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
   scale_y_continuous("normalised distance from centre") +
-  geom_jitter(data = df_pos, aes(hoops, pos, colour = Order),
-             shape = 4, height = 0, width = 0.1) + 
+  # geom_jitter(data = df_pos, aes(hoops, pos, colour = Order),
+  #            shape = 4, height = 0, width = 0.1) + 
   scale_colour_ptol() +
   scale_fill_ptol() -> plt_b
 
 plt_hu + plt_b + plot_layout(guides = "collect")
 
 
+ggsave("scratch/plots/model_fit.png", width = 8, height = 2.5)
+
+
 # are there differences between conditions?
 
 # first, central standing?
-post_hu %>% select(-p) %>% 
-  pivot_wider(names_from = "group", values_from = "hu") %>%
+post_hu %>% select(-hu) %>% 
+  pivot_wider(names_from = "group", values_from = "p") %>%
   mutate(Difference = Primed - Control) %>%
   pivot_longer(c("Control", "Primed", "Difference"), names_to = "group", values_to = "hu") -> post_hu_d
 
-post_hu_d %>%
-  ggplot(aes(hu, fill = group)) +
-  geom_density(alpha = 0.33) + 
-  geom_vline(xintercept = 0, linetype = 2) + 
-  facet_grid(.~hoops) +
-  scale_fill_ptol() -> plt_hu_d
+# post_hu_d %>%
+#   ggplot(aes(hu, fill = group)) +
+#   geom_density(alpha = 0.33) + 
+#   geom_vline(xintercept = 0, linetype = 2) + 
+#   facet_grid(.~hoops) +
+#   scale_fill_ptol() -> plt_hu_d
 
 post_hu_d %>% group_by(group, hoops) %>%
   median_hdci(hu) %>%
   knitr::kable()
 
 # and now non-central standing
-post_b %>% select(-pos) %>% 
-  pivot_wider(names_from = "group", values_from = "b") %>%
+post_b %>% select(-b) %>% 
+  pivot_wider(names_from = "group", values_from = "pos") %>%
   mutate(Difference = Primed - Control) %>%
   pivot_longer(c("Control", "Primed", "Difference"), names_to = "group", values_to = "b") -> post_b_d
 
-post_b_d %>%
-  ggplot(aes(b, fill = group)) +
-  geom_density(alpha = 0.33) + 
-  geom_vline(xintercept = 0, linetype = 2) + 
-  facet_grid(.~hoops) +
-  scale_fill_ptol()-> plt_b_d
+# post_b_d %>%
+#   ggplot(aes(b, fill = group)) +
+#   geom_density(alpha = 0.33) + 
+#   geom_vline(xintercept = 0, linetype = 2) + 
+#   facet_grid(.~hoops) +
+#   scale_fill_ptol()-> plt_b_d
 
 post_b_d %>% group_by(group, hoops) %>%
   median_hdci(b) %>%
   knitr::kable()
 
-(plt_hu + plt_b) / (plt_hu_d + plt_b_d) +  plot_layout(guides = "collect")
+# (plt_hu + plt_b) / (plt_hu_d + plt_b_d) +  plot_layout(guides = "collect")
 
 
+################
+# model comparison
+#################
 
+# fit simpler model
+
+m2 <- brm(bf(Participant.pos ~ 0 + hoops + (0 + hoops:Order | Participant),
+            hu ~ 0 + hoops + (0 + hoops:Order | Participant)), 
+         data = df,
+         family = hurdle_lognormal(),
+         prior = my_priors,
+         iter = 5000,
+         backend = "cmdstanr")
+
+
+model_weights(m, m2, method = "loo")
+model_weights(m, m2, method = "waic")
