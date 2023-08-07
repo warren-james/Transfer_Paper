@@ -16,7 +16,7 @@ library(patchwork)
 options(mc.cores = 8, 
         digits = 2)
 
-theme_set(theme_minimal())
+theme_set(theme_bw())
 #### Constants ####
 slab_size <- 0.46
 
@@ -76,12 +76,46 @@ df %>% filter(Hoop.dist %in% c(5, 13)) %>%
          err = abs(err)) -> df
 
 my_priors <- c(prior(normal(0, 1), class = sd),
-               prior(normal(0, 1), class = b),
+               prior(normal(-1, 2), class = b),
                prior(normal(0, 1), class = sd, dpar = "hu"),
-               prior(normal(0, 1), class = b, dpar = "hu"))
+               prior(normal(0, 2), class = b, dpar = "hu"))
 
-m <- brm(bf(Participant.pos ~ 0 + hoops:Order + (0 + hoops:Order | Participant),
-            hu ~ 0 + hoops:Order + (0 + hoops:Order | Participant)), 
+# prior model
+m <- brm(bf(Participant.pos ~ 0 + hoops + (0 + hoops | Participant),
+            hu ~ 0 + hoops + (0 + hoops | Participant)), 
+         data = df,
+         family = hurdle_lognormal(),
+         prior = my_priors,
+         iter = 5000,
+         backend = "cmdstanr",
+         sample_prior = "only")
+
+# get prior predictions
+m %>% gather_draws(`[b|hu]_.*`, regex = TRUE) %>%
+  mutate(param = if_else(str_detect(.variable, "hu"), "hu", "b"),
+         .variable = str_remove(.variable, "b_(hu_)*"),
+         .variable = str_remove_all(.variable, "hoops|Order")) %>%
+  mutate(hoops = as_factor(.variable), 
+         hoops = fct_relevel(hoops, "near")) %>%
+  ungroup() %>%
+  select(-.variable) -> prior
+
+
+prior %>% filter(param == "hu") %>%
+  mutate(group = "prior", 
+         p = plogis(.value)) %>%
+  rename(hu = ".value") %>%
+  select(-param) -> prior_hu
+
+prior %>% filter(param == "b") %>%
+  mutate(group = "prior",
+         pos = exp(.value)) %>%
+  rename(b = ".value") %>%
+  select(-param) -> prior_b
+
+
+m <- brm(bf(Participant.pos ~ 0 + hoops:Order + (0 + hoops | Participant),
+            hu ~ 0 + hoops:Order + (0 + hoops | Participant)), 
          data = df,
          family = hurdle_lognormal(),
          prior = my_priors,
@@ -106,7 +140,6 @@ m %>% gather_draws(`[b|hu]_.*`, regex = TRUE) %>%
   mutate(hoops = as_factor(hoops), 
          hoops = fct_relevel(hoops, "near")) -> post
 
-
 ##########
 # first, looo at pr(central)
 ##########
@@ -118,11 +151,15 @@ df %>% group_by(Participant, hoops, Order) %>%
 post %>% filter(param == "hu") %>%
   mutate(p = plogis(.value)) %>%
   rename(hu = ".value") %>%
-  select(-param) -> post_hu
+  select(-param) %>%
+  bind_rows(prior_hu) %>%
+  mutate(group = as_factor(group),
+         group = fct_relevel(group, "prior")) -> post_hu
+
 
 ggplot(post_hu, aes(hoops, p, colour = group)) + 
   stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
-  scale_y_continuous("Pr(stand at central position)") +
+  scale_y_continuous("Pr(stand at central position)", limits = c(0, 1), expand = c(0, 0)) +
   # geom_jitter(data = df_prc, aes(hoops, Prc, colour = Order), 
   #            shape = 4, height = 0, width = 0.1) + 
   scale_colour_ptol() +
@@ -131,7 +168,10 @@ ggplot(post_hu, aes(hoops, p, colour = group)) +
 post %>% filter(param == "b") %>%
   mutate(pos = exp(.value)) %>%
   rename(b = ".value") %>%
-  select(-param) -> post_b
+  select(-param) %>%
+  bind_rows(prior_b) %>%
+  mutate(group = as_factor(group),
+         group = fct_relevel(group, "prior"))-> post_b
 
 df %>% group_by(Participant, hoops, Order) %>%
   filter(Participant.pos > 0) %>%
@@ -140,15 +180,13 @@ df %>% group_by(Participant, hoops, Order) %>%
 
 ggplot(post_b, aes(hoops, pos, colour = group)) + 
   stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
-  scale_y_continuous("normalised distance from centre") +
+  scale_y_continuous("normalised distance from centre", limits = c(0, 1), expand = c(0, 0)) +
   # geom_jitter(data = df_pos, aes(hoops, pos, colour = Order),
   #            shape = 4, height = 0, width = 0.1) + 
   scale_colour_ptol() +
   scale_fill_ptol() -> plt_b
 
 plt_hu + plt_b + plot_layout(guides = "collect")
-
-
 ggsave("scratch/plots/model_fit.png", width = 8, height = 2.5)
 
 
