@@ -105,7 +105,37 @@ df_P2$Opt_acc[df_P2$opt_pos == 1] <- 0.5
 
 # again, reduce data set 
 df_P2 <- df_P2 %>%
-  select(-opt_pos)
+  select(-opt_pos) %>%
+  as_tibble()
+
+
+################ model
+
+my_priors <- c(prior(normal(0, 0.5), class = sd),
+               prior(normal(0, 1), class = b),
+               prior(normal(0, 0.5), class = sd, dpar = "hu"),
+               prior(normal(0, 1), class = b, dpar = "hu"))
+
+dat <- df_P2 %>% filter(hoop_dist %in% c(5, 17)) %>%
+  mutate(hoop = as_factor(hoop_dist),
+         hoop = fct_recode(hoop, near = "5", far = "17")) %>%
+  rename(person = "Participant", condition = "Condition", standing_position = "Norm_pos")
+
+m <- brm(bf(standing_position ~ 0 + hoop:condition + (0 + hoop:condition | person),
+            hu ~ 0 + hoop:condition + (0 + hoop:condition | person)), 
+         data = dat,
+         family = hurdle_lognormal(),
+         prior = my_priors,
+         iter = 5000,
+         backend = "cmdstanr")
+
+
+
+
+
+
+
+#old ######
 
 #### PLOTS ####
 #### PLOTS: Each session accuracy ####

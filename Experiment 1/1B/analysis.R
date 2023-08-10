@@ -55,11 +55,34 @@ ggsave('standing_position.png', width = 8, height = 6)
 
 
 my_priors <- c(prior(normal(0, 0.5), class = sd),
-               prior(normal(0, 1), class = b),
+               prior(normal(-2, 1), class = b),
                prior(normal(0, 0.5), class = sd, dpar = "hu"),
-               prior(normal(0, 1), class = b, dpar = "hu"))
+               prior(normal(0, 1.5), class = b, dpar = "hu"))
 
 dat <- dat %>% filter(hoop != "med")
+
+# first, prior...
+m <- brm(bf(standing_position ~ 0 + hoop + (0 + hoop | person),
+            hu ~ 0 + hoop + (0 + hoop | person)), 
+         data = dat,
+         family = hurdle_lognormal(),
+         prior = my_priors,
+         iter = 5000,
+         backend = "cmdstanr",
+         sample_prior = "only")
+
+m %>% gather_draws(`[b|hu]_.*`, regex = TRUE) %>%
+  mutate(param = if_else(str_detect(.variable, "hu"), "hu", "b"),
+         .variable = str_remove(.variable, "b_(hu_)*"),
+         .variable = str_remove_all(.variable, "hoop|condition")) %>%
+  rename(hoop = ".variable") %>%
+  mutate(hoop = as_factor(hoop), 
+         hoop = fct_relevel(hoop, "near"),
+         group = "prior") -> prior
+
+write_csv(prior, "1_prior.csv")
+
+### now do post
 
 m <- brm(bf(standing_position ~ 0 + hoop:condition + (0 + hoop:condition | person),
             hu ~ 0 + hoop:condition + (0 + hoop:condition | person)), 
@@ -80,6 +103,7 @@ m %>% gather_draws(`[b|hu]_.*`, regex = TRUE) %>%
   mutate(hoop = as_factor(hoop), 
          hoop = fct_relevel(hoop, "near")) -> post
 
+write_csv(post, "1b_post.csv")
 
 dat %>% group_by(person, hoop, condition) %>%
   summarise(Prc = mean(standing_position == 0)) -> df_prc
