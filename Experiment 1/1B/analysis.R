@@ -55,7 +55,7 @@ ggsave('standing_position.png', width = 8, height = 6)
 
 
 my_priors <- c(prior(normal(0, 0.5), class = sd),
-               prior(normal(-2, 1), class = b),
+               prior(normal(-1.5, 1), class = b),
                prior(normal(0, 0.5), class = sd, dpar = "hu"),
                prior(normal(0, 1.5), class = b, dpar = "hu"))
 
