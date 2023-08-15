@@ -54,7 +54,7 @@ post %>% filter(param == "b") %>%
 
 ggplot(post_b, aes(hoops, pos, colour = group)) + 
   stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
-  scale_y_continuous("normalised distance from centre", limits = c(0, 5.2), expand = c(0, 0)) +
+  scale_y_continuous("normalised distance from centre", limits = c(0, 4), expand = c(0, 0)) +
   scale_colour_manual(values = c("#aaaaaa", "#0077bb", "#33bbee", "#009988", "#ee7733", "#cc3311")) +
   geom_hline(yintercept = 1, linetype  =2)-> plt_b
 
