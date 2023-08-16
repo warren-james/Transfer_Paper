@@ -56,7 +56,34 @@ ggplot(post_b, aes(hoops, pos, colour = group)) +
   stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
   scale_y_continuous("normalised distance from centre", limits = c(0, 4), expand = c(0, 0)) +
   scale_colour_manual(values = c("#aaaaaa", "#0077bb", "#33bbee", "#009988", "#ee7733", "#cc3311")) +
-  geom_hline(yintercept = 1, linetype  =2)-> plt_b
+  geom_hline(yintercept = 1, linetype  =2) +
+  coord_cartesian(ylim = c(0, 2)) -> plt_b
 
 plt_hu + plt_b + plot_layout(guides = "collect")
-ggsave("exp1bc_post.png", width = 8, height = 3)
+ggsave("exp1bc_post.png", width = 8, height = 2.5)
+
+
+post %>% 
+  mutate(.value = if_else(param=="hu", plogis(.value), exp(.value))) -> post
+
+post %>%
+  group_by(param, hoops, group) %>%
+  median_hdci(.value) %>%
+  knitr::kable()
+
+# compute differences
+post %>% filter(hoops == "far", str_detect(group, "1b")) %>%
+  pivot_wider(names_from = group, values_from = ".value") %>%
+  mutate(reach_diff = `1b: maths` - `1b: reaching`,
+         logic_diff = `1b: maths` - `1b: logic`) %>%
+  select(param, reach_diff, logic_diff) %>%
+  group_by(param) %>%
+  median_hdci(reach_diff,logic_diff)
+
+
+post %>% filter(hoops == "far", str_detect(group, "1c")) %>%
+  pivot_wider(names_from = group, values_from = ".value") %>%
+  mutate(reach_diff = `1c: sudoku` - `1c: reaching`) %>%
+  select(param, reach_diff) %>%
+  group_by(param) %>%
+  median_hdci(reach_diff)

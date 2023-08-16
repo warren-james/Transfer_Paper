@@ -6,6 +6,12 @@
 #### libraries ####
 library(tidyverse)
 library(gridExtra)
+library(brms)
+
+options(mc.cores = 8)
+
+theme_set(theme_bw())
+
 
 #### Any constants ####
 slab_size <- 0.46
@@ -112,9 +118,10 @@ df_P2 <- df_P2 %>%
 ################ model
 
 my_priors <- c(prior(normal(0, 0.5), class = sd),
-               prior(normal(0, 1), class = b),
+               prior(normal(-1.5, 1), class = b),
                prior(normal(0, 0.5), class = sd, dpar = "hu"),
-               prior(normal(0, 1), class = b, dpar = "hu"))
+               prior(normal(0, 1.5), class = b, dpar = "hu"))
+
 
 dat <- df_P2 %>% filter(hoop_dist %in% c(5, 17), Condition != "tableFail") %>%
   mutate(hoop = as_factor(hoop_dist),
@@ -140,37 +147,37 @@ m %>% gather_draws(`[b|hu]_.*`, regex = TRUE) %>%
          hoop = fct_relevel(hoop, "near")) -> post
 
 write_csv(post, "1c_post.csv")
-
-dat %>% group_by(person, hoop, condition) %>%
-  summarise(Prc = mean(standing_position == 0)) -> df_prc
-
-
-post %>% filter(param == "hu") %>%
-  mutate(p = plogis(.value)) %>%
-  rename(hu = ".value") %>%
-  select(-param) -> post_hu
-
-ggplot(post_hu, aes(hoop, p, colour = group)) + 
-  stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
-  scale_y_continuous("Pr(stand at central position)", 
-                     limits = c(0, 1), expand = c(0,0)) +
-  scale_colour_ptol() +
-  scale_fill_ptol()  -> plt_hu
-
-post %>% filter(param == "b") %>%
-  mutate(pos = exp(.value)) %>%
-  rename(b = ".value") %>%
-  select(-param) -> post_b
-
-
-ggplot(post_b, aes(hoop, pos, colour = group)) + 
-  stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
-  scale_y_continuous("normalised distance from centre", limits = c(0, 5.2), expand = c(0, 0)) +
-  scale_colour_ptol() +
-  scale_fill_ptol() -> plt_b
-
-plt_hu + plt_b + plot_layout(guides = "collect")
-
-
-ggsave("plots/model_fit.png", width = 8, height = 2.6)
-
+# 
+# dat %>% group_by(person, hoop, condition) %>%
+#   summarise(Prc = mean(standing_position == 0)) -> df_prc
+# 
+# 
+# post %>% filter(param == "hu") %>%
+#   mutate(p = plogis(.value)) %>%
+#   rename(hu = ".value") %>%
+#   select(-param) -> post_hu
+# 
+# ggplot(post_hu, aes(hoop, p, colour = group)) + 
+#   stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
+#   scale_y_continuous("Pr(stand at central position)", 
+#                      limits = c(0, 1), expand = c(0,0)) +
+#   scale_colour_ptol() +
+#   scale_fill_ptol()  -> plt_hu
+# 
+# post %>% filter(param == "b") %>%
+#   mutate(pos = exp(.value)) %>%
+#   rename(b = ".value") %>%
+#   select(-param) -> post_b
+# 
+# 
+# ggplot(post_b, aes(hoop, pos, colour = group)) + 
+#   stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
+#   scale_y_continuous("normalised distance from centre", limits = c(0, 5.2), expand = c(0, 0)) +
+#   scale_colour_ptol() +
+#   scale_fill_ptol() -> plt_b
+# 
+# plt_hu + plt_b + plot_layout(guides = "collect")
+# 
+# 
+# ggsave("plots/model_fit.png", width = 8, height = 2.6)
+# 
