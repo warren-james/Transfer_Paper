@@ -66,25 +66,56 @@ dat %>% mutate(sep = 2*sep) %>%
 	nest(group, group, block, sep, fixated, correct, p_centre) %>%
 	full_join(det_fits) -> ldat
 dat$p_side <- unlist(map2(ldat$model, ldat$data, predict, type = "response"))
-dat$p_side <- 0.5 + 0.5 * dat$p_side
+dat$p_side <- unlist(map2(ldat$model, ldat$data, predict, type = "response"))
+dat$p_side   <- 0.5*1 + 0.5 * (dat$p_side + 0.5 * (1-dat$p_side))
 
-# get expected optimal strat and simulate:
+# adjust p_side and p_centre to take 50% guess rate into account
+
+dat$p_centre <- dat$p_centre + 0.5 * (1-dat$p_centre)
+
+# get expected optimal strategy and simulate:
+
 
 dat %>% mutate(
-	p_optimal =  pmax(p_centre, p_side),
-	sim_acc  = if_else(p_optimal > runif(n = n()), 1, 0)) %>%
-	select(participant, group, block, sep, sim_acc) %>%
-	rename(correct = "sim_acc") %>%
-	mutate(group = "simulated") %>%
-	bind_rows(dat) %>%
-	select(participant, group, block, sep, correct) %>%
-	mutate(sep = sep/max(sep) )-> dat
+  p_optimal =  pmax(p_centre, p_side)) -> dat
 
-dat %>% group_by(group) %>%
-summarise(mean_acc = mean(correct, na.rm = TRUE))
+
+dat %>% pivot_longer(c("p_centre", "p_side", "p_optimal"), names_to = "acc") %>%
+  group_by(participant, group, block, acc, sep) %>%
+  filter(block ==1) %>%
+  summarise(value = mean(value)) %>%
+  ggplot(aes(sep, value, colour = acc, group = interaction(acc, participant))) +
+  geom_path(alpha = 0.5) +
+  facet_grid(group ~ participant)
+
+
+dat %>% mutate(
+  sim_acc  = if_else(p_optimal > runif(n = n()), 1, 0)) %>%
+  select(participant, group, block, sep, sim_acc) %>%
+  rename(correct = "sim_acc") %>%
+  mutate(group = "simulated") %>%
+  bind_rows(dat) %>%
+  select(participant, group, block, sep, correct) %>%
+  mutate(sep = sep/max(sep),
+         block = as_factor(block)) -> dat
+
+
+# fit block two labels
+intructed_group <- dat %>% filter(block == 1, group == "instruction") %>%
+  group_by(participant) %>% summarise()
+
+dat %>% mutate(
+  group = if_else((participant %in% intructed_group$participant) & (group != "simulated") & (block == 2), 
+                  "instruction", group)) -> dat
+
+# priors!
+my_priors <- c(
+  prior(normal(0, 1), class = b))
 
 
 m <- brm(data = dat,
-	correct ~ group * block * sep, family = "bernoulli")
+         correct ~ 0 + group:block +  group:block:sep + (0 + block + block:sep|participant), 
+         family = "bernoulli",
+         prior = my_priors)
 
 save(m, file = "m_brms")
