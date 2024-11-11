@@ -39,8 +39,16 @@ pred <- pmap_df(post, get_acc)
 
 
 pred %>% 
-  filter(.draw < 101) %>%
+  filter(.draw < 201) %>%
   ggplot(aes(separation, p, colour = group, group = interaction(group, .draw))) + 
-  geom_path(alpha = 0.25) + 
+  geom_path(alpha = 0.15) + 
   facet_wrap(~block) +
   theme_bw()
+
+pred %>% 
+  group_by(group, block, separation) %>%
+  median_hdci(p) %>%
+  ggplot(aes(separation, ymin = .lower, ymax = .upper, fill = group)) + 
+  geom_ribbon(alpha = 0.25) +
+  facet_wrap(~block) + 
+  scale_fill_viridis_d()

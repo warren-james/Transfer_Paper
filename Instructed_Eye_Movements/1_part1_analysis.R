@@ -110,11 +110,15 @@ dat %>% mutate(
 
 # priors!
 my_priors <- c(
-  prior(normal(0, 1), class = b))
+  prior(normal(0, 1), class = b, nlpar = "eta"))
 
 
 m <- brm(data = dat,
-         correct ~ 0 + group:block +  group:block:sep + (0 + block + block:sep|participant), 
+         bf(
+           correct ~ guess + (1-guess) * inv_logit(eta), 
+           guess ~ offset(0.5),
+             eta ~ group:block +  group:block:sep , #+ (0 + block + block:sep|participant))
+           nl = TRUE),
          family = "bernoulli",
          prior = my_priors)
 

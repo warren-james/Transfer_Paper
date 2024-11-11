@@ -141,12 +141,11 @@ m %>% gather_draws(`[b|hu]_.*`, regex = TRUE) %>%
          hoops = fct_relevel(hoops, "near")) -> post
 
 ##########
-# first, looo at pr(central)
+# first, look at pr(central)
 ##########
 
 df %>% group_by(Participant, hoops, Order) %>%
   summarise(Prc = mean(Participant.pos == 0)) -> df_prc
-
 
 post %>% filter(param == "hu") %>%
   mutate(p = plogis(.value)) %>%
@@ -155,7 +154,6 @@ post %>% filter(param == "hu") %>%
   bind_rows(prior_hu) %>%
   mutate(group = as_factor(group),
          group = fct_relevel(group, "prior")) -> post_hu
-
 
 ggplot(post_hu, aes(hoops, p, colour = group)) + 
   stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
@@ -176,7 +174,6 @@ post %>% filter(param == "b") %>%
 df %>% group_by(Participant, hoops, Order) %>%
   filter(Participant.pos > 0) %>%
   summarise(pos = mean(Participant.pos))-> df_pos
-
 
 ggplot(post_b, aes(hoops, pos, colour = group)) + 
   stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
@@ -242,7 +239,6 @@ m2 <- brm(bf(Participant.pos ~ 0 + hoops + (0 + hoops:Order | Participant),
          prior = my_priors,
          iter = 5000,
          backend = "cmdstanr")
-
 
 model_weights(m, m2, method = "loo")
 model_weights(m, m2, method = "waic")
