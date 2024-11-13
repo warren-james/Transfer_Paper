@@ -1,6 +1,9 @@
 library(tidyverse)
 library(brms)
 
+options(mc.cores = 8, digits = 2)
+
+
 ###################################################################
 ## import data from part 1 and fit the psychometric detection curve
 ###################################################################
@@ -14,10 +17,10 @@ p_id <- regmatches(files, regexpr('(?<=_)[0-9]*(?=_)', files, perl = TRUE))
 dat <- map(files, read_csv, col_names = c("block", "sep", "correct"))
 rm(files, folder)
 
-fit_detection_curve <- function(df) 
+fit_detection_curve <- function(df)
 {
-	m <- glm(correct ~ sep, 
-		data = df, 
+	m <- glm(correct ~ sep,
+		data = df,
 		family = "binomial")
 
 	return(model = m)
@@ -42,7 +45,7 @@ condition_code <- if_else(condition_code == "2", "no instruction", "instruction"
 p_id <- regmatches(files, regexpr('(?<=_)[0-9]*(?=_)', files, perl = TRUE))
 
 # read in data
-map_df(files, read_csv, 
+map_df(files, read_csv,
 		col_names = c("block", "sep", "fixated", "correct")) %>%
 	mutate(
 		participant = rep(p_id, each = 90),
@@ -54,8 +57,8 @@ rm(files, folder, condition_code)
 
 # simulate
 
-# get expected accuracy for central fixations 
-dat %>% 
+# get expected accuracy for central fixations
+dat %>%
 	nest(group, group, block, sep, fixated, correct) %>%
 	full_join(det_fits) -> ldat
 dat$p_centre <- unlist(map2(ldat$model, ldat$data, predict, type = "response"))
@@ -88,7 +91,6 @@ dat %>% pivot_longer(c("p_centre", "p_side", "p_optimal"), names_to = "acc") %>%
   geom_path(alpha = 0.5) +
   facet_grid(group ~ participant)
 
-
 dat %>% mutate(
   sim_acc  = if_else(p_optimal > runif(n = n()), 1, 0)) %>%
   select(participant, group, block, sep, sim_acc) %>%
@@ -105,21 +107,25 @@ intructed_group <- dat %>% filter(block == 1, group == "instruction") %>%
   group_by(participant) %>% summarise()
 
 dat %>% mutate(
-  group = if_else((participant %in% intructed_group$participant) & (group != "simulated") & (block == 2), 
+  group = if_else((participant %in% intructed_group$participant) & (group != "simulated") & (block == 2),
                   "instruction", group)) -> dat
+
+write_csv(dat, "exp2_data.csv")
+
 
 # priors!
 my_priors <- c(
-  prior(normal(0, 1), class = b, nlpar = "eta"))
-
+  prior(normal(0, 1), class = b, nlpar = "eta"),
+  prior(normal(0.5, 1), class = b, nlpar = "guess"))
 
 m <- brm(data = dat,
          bf(
            correct ~ guess + (1-guess) * inv_logit(eta), 
-           guess ~ offset(0.5),
-             eta ~ group:block +  group:block:sep , #+ (0 + block + block:sep|participant))
+           guess ~ 1,
+           eta ~ group:block +  group:block:sep , #+ (0 + block + block:sep|participant))
            nl = TRUE),
-         family = "bernoulli",
+         family = bernoulli(link = "identity"),
          prior = my_priors)
 
+m
 save(m, file = "m_brms")
