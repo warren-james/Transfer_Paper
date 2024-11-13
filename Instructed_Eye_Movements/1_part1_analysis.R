@@ -121,8 +121,8 @@ my_priors <- c(
 m <- brm(data = dat,
          bf(
            correct ~ guess + (1-guess) * inv_logit(eta), 
-           guess ~ 1,
-           eta ~ group:block +  group:block:sep , #+ (0 + block + block:sep|participant))
+           guess ~ 0 + group,
+           eta ~ 0 + group:block +  group:block:sep,
            nl = TRUE),
          family = bernoulli(link = "identity"),
          prior = my_priors)
