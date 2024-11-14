@@ -14,11 +14,11 @@ inv_logit <- function(x) {
 }
 
 dat %>% 
-  modelr::data_grid(group, block, sep = seq(0, 1, 0.1)) %>% 
+  modelr::data_grid(group = c("instruction", "no instruction"), block, sep = seq(0, 1, 0.1)) %>% 
   add_epred_draws(m, re_formula = NA) -> pdat
 
 dat %>%
-  filter(is.finite(correct)) %>%
+  filter(is.finite(correct), group != "simulated") %>%
   group_by(participant, group, block, sep) %>%
   summarise(correct = mean(correct)) -> adat
 
@@ -30,12 +30,12 @@ pdat %>%
               alpha = 0.5) +
   geom_path(data = adat, 
             aes(y = correct, colour = group, group = interaction(group, participant)),
-            alpha = 0.5) + 
+            alpha = 0.25) + 
   geom_point(data = adat, 
             aes(y = correct, colour = group, group = interaction(group, participant)),
-            alpha = 0.5) + 
+            alpha = 0.25) + 
   geom_hline(yintercept = c(0.75, 0.5), linetype =2) + 
-  facet_grid(group ~ block)
+  facet_grid(. ~ block)
 
 
 m %>% gather_draws(`b_.*`, regex = TRUE) %>%
