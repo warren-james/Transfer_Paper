@@ -114,13 +114,14 @@ write_csv(dat, "exp2_data.csv")
 
 # priors!
 my_priors <- c(
-  prior(normal(0, 1), class = b, nlpar = "eta"),
-  prior(normal(0.5, 0.1), class = b, nlpar = "guess"))
+  prior(normal(0, 0.5), class = b, nlpar = "eta"),
+  prior(normal(0.5, 0.1), class = b, nlpar = "guess"),
+  prior(normal(0, 1), class = sd, nlpar = "eta"))
 
 m <- brm(data = dat %>% filter(group != "simulated"),
          bf(
            correct ~ guess + (1-guess) * inv_logit(eta), 
-           eta ~ 0 + group:block + group:block:sep, # + (0 + block + block:sep|participant),
+           eta ~ 0 + group:block + group:block:sep + (0 + block + block:sep|participant),
            guess ~ 0 + group:block,
            nl = TRUE),
          family = bernoulli(link = "identity"),
