@@ -78,10 +78,8 @@ dat$p_centre <- dat$p_centre + 0.5 * (1-dat$p_centre)
 
 # get expected optimal strategy and simulate:
 
-
 dat %>% mutate(
   p_optimal =  pmax(p_centre, p_side)) -> dat
-
 
 dat %>% pivot_longer(c("p_centre", "p_side", "p_optimal"), names_to = "acc") %>%
   group_by(participant, group, block, acc, sep) %>%
@@ -120,7 +118,7 @@ my_priors <- c(
 
 m <- brm(data = dat %>% filter(group != "simulated"),
          bf(
-           correct ~ guess + (1-guess) * inv_logit(eta), 
+           correct ~ inv_logit(guess) + inv_logit(1-guess) * inv_logit(eta), 
            eta ~ 0 + group:block + group:block:sep + (0 + block + block:sep|participant),
            guess ~ 0 + group:block,
            nl = TRUE),
