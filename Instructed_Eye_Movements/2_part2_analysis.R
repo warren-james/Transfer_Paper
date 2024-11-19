@@ -19,7 +19,7 @@ make_pred <- function(.draw, group, block, intercept, slope, guess) {
   
   eta = intercept + slope * sep
   
-  p <- guess + (1-guess) * inv_logit(eta)
+  p <- inv_logit(guess) + (1-inv_logit(guess)) * inv_logit(eta)
   
   return(tibble(.draw = .draw, 
                 group = group, block = block,
@@ -80,6 +80,35 @@ pred %>% group_by(group, block, sep) %>%
 
 ggplot(post, aes(slope, fill = group)) + geom_density() +
   facet_grid(block ~ .)
+
+
+
+
+####
+
+
+dat %>% 
+  filter(group == c("instruction", "no instruction")) %>% 
+  modelr::data_grid(group, block, sep = seq(0, 1, 0.05)) %>% 
+  add_epred_draws(m, re_formula = NA) -> pdat
+
+pdat %>% 
+  group_by(group, block, sep) %>%
+  median_hdci() %>%
+  ggplot(aes(sep, .epred, fill = group)) + 
+  geom_ribbon(aes(ymin = .lower, ymax = .upper),
+              alpha = 0.5) +
+  geom_path(data = adat, 
+            aes(y = correct, colour = group, 
+                group = interaction(group, participant)),
+            alpha = 0.1) + 
+  geom_hline(yintercept = c(0.75, 0.5), linetype =2) + 
+  facet_wrap( ~block) +
+  ggthemes::scale_fill_calc() +
+  ggthemes::scale_colour_calc() +
+  theme_bw()
+###
+
 
 ####
 
