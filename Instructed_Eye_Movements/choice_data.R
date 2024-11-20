@@ -1,5 +1,9 @@
 # new script to analyse choice data
+library(tidyverse)
+library(brms)
+library(tidybayes)
 
+options(mc.cores = 8, digits = 2)
 
 
 folder <- "data/results/Part_2-3/"
@@ -34,7 +38,7 @@ dat %>% mutate(
 dat %>% mutate(fixated_side = if_else(fixated != 1, 1, 0)) -> dat
 
 # fix sep variable - convert to visual degrees
-dat$sep <- dat$sep/ 33  
+dat$sep <- dat$sep/ 35.5 
 
 # try making block more categorical in its labels
 dat %>% mutate(block = if_else(block == "1", "block 1", "block 2")) -> dat
