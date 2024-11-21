@@ -79,19 +79,22 @@ dat %>%
   add_epred_draws(m, re_formula = NA) %>% 
   group_by(group, block, sep) %>%
   median_hdci(.width =  0.95) %>%
-  mutate(group = fct_relevel(group, "no instruction", "instruction")) %>%
-  ggplot(aes(sep, .epred, fill = group)) + 
-  geom_ribbon(aes(ymin = .lower, ymax = .upper, 
-                  group = interaction(group, .width)),
-              alpha = 0.5) +
-  geom_path(data = adat,
-            aes(y = fixated_side, colour = group,
+  mutate(group = fct_relevel(group, "no instruction", "instruction"),
+         sep = sep + 7) %>%
+  ggplot(aes(sep, .epred, fill = group)) +
+  geom_path(data = adat %>% mutate(sep = sep + 7),
+            aes(y = fixated_side,
+                colour = group,
                 group = interaction(group, participant)),
-            alpha = 0.8) +
-  facet_wrap( ~block) +
+            alpha = 0.25) +
+  geom_ribbon(aes(ymin = .lower, ymax = .upper, 
+                  group = interaction(group, .width)), 
+                  alpha = 0.50)  +
+  facet_wrap(~block) +
   ggthemes::scale_fill_ptol() +
   ggthemes::scale_colour_ptol() +
   scale_y_continuous("prob. fixate central square") + 
+  scale_x_continuous("target separation (visual degrees)") + 
   theme_bw() -> plt1
 
 m %>% as_draws_df(variable = "b_", regex = TRUE) %>%
@@ -138,7 +141,8 @@ dat %>%
   summarise(accuracy = mean(correct, na.rm = T)) %>%
   mutate(
     group = factor(group),
-    group = fct_relevel(group, "no instruction", "instruction")) -> acc
+    group = fct_relevel(group, "no instruction", "instruction"),
+    block = str_remove(block, "block ")) -> acc
 
 acc %>% 
   ggplot(aes(block, accuracy, fill = group)) + 
@@ -147,8 +151,8 @@ acc %>%
   theme_bw() +
   theme(legend.position = "none") -> plt_acc
 
-plt1 + plt2 + plt_acc + plot_layout(guides = "collect", widths = c(2, 1, 1))
-ggsave("exp2_results.png", width = 8, height = 2.5)
+plt1 + plt2 + plt_acc + plot_layout(guides = "collect", widths = c(3, 1, 1))
+ggsave("exp2_results.png", width = 10, height = 3)
 # 
 # %>%
 #   summarise(
