@@ -110,26 +110,26 @@ m %>% as_draws_df(variable = "b_", regex = TRUE) %>%
          block = if_else(str_detect(block, "1"), "1", "2")) -> post
 
 post %>%
-  filter(block == "2") %>%
+  # filter(block == "1") %>%
   select(-intercept) %>%
   pivot_wider(names_from = "group", values_from = "slope") %>%
-  mutate(difference = instruction - `no instruction`) %>%
+  # mutate(difference = instruction - `no instruction`) %>%
   pivot_longer(-c(.draw, block), names_to = "group", values_to = "slope") %>%
   mutate(group = fct_relevel(group, "no instruction", "instruction")) -> post
   
 post %>%
-  ggplot(aes(slope, fill = group)) + ggplot(aes(slope, fill = group)) + post
-  geom_density(alpha = 0.5) + 
-  geom_vline(xintercept = 0, linetype = 2) +
+  ggplot(aes(block, slope, colour = group)) + 
+  stat_interval(
+    position = position_dodge(width = 0.5),
+    .width = c(0.50, 0.80, 0.95), alpha = 0.5) +
   theme_bw() + 
-  scale_fill_manual(values = c("#4477AA", "#CC6677", "#777777")) +
+  ggthemes::scale_color_ptol() + 
   theme(legend.position = "none") -> plt2
 
 
 
-
 post %>%
-  group_by(group) %>%
+  group_by(group, block) %>%
   median_hdci(slope) %>%
   knitr::kable()
 
