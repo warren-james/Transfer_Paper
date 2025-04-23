@@ -44,7 +44,7 @@ ggplot(post_hu, aes(hoops, p, colour = group)) +
   stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
   scale_y_continuous("Pr(stand at central position)", 
                      limits = c(0, 1), expand = c(0,0)) +
-  scale_colour_manual(values = c("#aaaaaa", "#0077bb", "#33bbee", "#009988", "#ee7733", "#cc3311"))  -> plt_hu
+  scale_colour_manual(values = c("#aaaaaa", "#ee7733", "#33bbee", "#009988", "#0077bb" , "#cc3311"))  -> plt_hu
 
 post %>% filter(param == "b") %>%
   mutate(pos = exp(.value)) %>%
@@ -55,7 +55,7 @@ post %>% filter(param == "b") %>%
 ggplot(post_b, aes(hoops, pos, colour = group)) + 
   stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
   scale_y_continuous("normalised distance from centre", limits = c(0, 4), expand = c(0, 0)) +
-  scale_colour_manual(values = c("#aaaaaa", "#0077bb", "#33bbee", "#009988", "#ee7733", "#cc3311")) +
+  scale_colour_manual(values = c("#aaaaaa", "#ee7733", "#33bbee", "#009988", "#0077bb" , "#cc3311")) +
   geom_hline(yintercept = 1, linetype  =2) +
   coord_cartesian(ylim = c(0, 2)) -> plt_b
 

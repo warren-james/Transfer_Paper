@@ -82,30 +82,30 @@ m %>% gather_draws(`[b|hu]_.*`, regex = TRUE) %>%
          group = "prior") -> prior
 
 write_csv(prior, "1_prior.csv")
-# 
-# ### now do post
-# 
-# m <- brm(bf(standing_position ~ 0 + hoop:condition + (0 + hoop:condition | person),
-#             hu ~ 0 + hoop:condition + (0 + hoop:condition | person)), 
-#          data = dat,
-#          family = hurdle_lognormal(),
-#          prior = my_priors,
-#          iter = 5000,
-#          backend = "cmdstanr")
-# 
-# ##############
-# # plot predictions
-# ##############
-# m %>% gather_draws(`[b|hu]_.*`, regex = TRUE) %>%
-#   mutate(param = if_else(str_detect(.variable, "hu"), "hu", "b"),
-#          .variable = str_remove(.variable, "b_(hu_)*"),
-#          .variable = str_remove_all(.variable, "hoop|condition")) %>%
-#   separate(.variable, into = c("hoop", "group"), sep = ":") %>%
-#   mutate(hoop = as_factor(hoop), 
-#          hoop = fct_relevel(hoop, "near")) -> post
-# 
-# write_csv(post, "1b_post.csv")
-# 
+
+### now do post
+
+m <- brm(bf(standing_position ~ 0 + hoop:condition + (0 + hoop:condition | person),
+            hu ~ 0 + hoop:condition + (0 + hoop:condition | person)),
+         data = dat,
+         family = hurdle_lognormal(),
+         prior = my_priors,
+         iter = 5000,
+         backend = "cmdstanr")
+
+##############
+# plot predictions
+##############
+m %>% gather_draws(`[b|hu]_.*`, regex = TRUE) %>%
+  mutate(param = if_else(str_detect(.variable, "hu"), "hu", "b"),
+         .variable = str_remove(.variable, "b_(hu_)*"),
+         .variable = str_remove_all(.variable, "hoop|condition")) %>%
+  separate(.variable, into = c("hoop", "group"), sep = ":") %>%
+  mutate(hoop = as_factor(hoop),
+         hoop = fct_relevel(hoop, "near")) -> post
+
+write_csv(post, "1b_post.csv")
+
 # dat %>% group_by(person, hoop, condition) %>%
 #   summarise(Prc = mean(standing_position == 0)) -> df_prc
 # 
