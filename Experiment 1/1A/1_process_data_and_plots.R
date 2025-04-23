@@ -45,7 +45,7 @@ dm <- tibble(Participant = as_factor(1:32), b = m$coefficients[33:64]) %>%
   arrange(b)
 
 df %>% mutate(
-  Participant = fct_relevel(Participant, levels = as.character(dm$Participant))) -> df
+  Participant = fct_relevel(Participant,  as.character(dm$Participant))) -> df
 
 #### make plots ####
 plt <- ggplot(df, aes(Hoop.dist*slab_size, Participant.pos)) +
@@ -58,7 +58,7 @@ plt <- ggplot(df, aes(Hoop.dist*slab_size, Participant.pos)) +
   theme_bw() +
   scale_colour_ptol() +
   theme(strip.background = element_blank(),
-        strip.text.x = element_blank(), 
+        # strip.text.x = element_blank(), 
         legend.position = "none") 
 plt
 
