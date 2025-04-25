@@ -20,7 +20,7 @@ rm(df_P2)
 
 # process 1b
 db %>%
-    mutate(person = as.factor(1:nrow(db))) %>%
+    mutate(person = (1:nrow(db))) %>%
     select(person, Condition, 
            AccuracyCHoopTrial1, AccuracyCHoopTrial2, AccuracyCHoopTrial3,
            AccuracyMHoopTrial1, AccuracyMHoopTrial2, AccuracyMHoopTrial3,
@@ -36,15 +36,27 @@ db %>%
                           far   = c("AccuracyFHoopTrial1", "AccuracyFHoopTrial2", "AccuracyFHoopTrial3"))) %>%
   group_by(person, condition, hoop) %>%
   summarise(accuracy = mean(hit)) %>%
-  ggplot(aes(hoop, accuracy, fill = condition)) + 
-  geom_boxplot() +
-  scale_x_discrete("hoop separation")
+  mutate(condition = fct_recode(condition, 
+                            "1b: reaching" = "ReachingTask",
+                            "1b: logic" = "LogicPuzzle",
+                            "1b: maths" = "MathsQuestions")) -> db
 
 # process 1c
 dc %>% group_by(Participant, hoop_dist, Condition) %>%
   summarise(accuracy = mean(Accuracy)) %>%
-  rename(condition = "Condition", hoop = "hoop_dist") %>%
-  mutate(hoop = slab_size * hoop)
+  rename(condition = "Condition", hoop = "hoop_dist", person = "Participant") %>%
+  mutate(hoop = factor(slab_size * hoop),
+         hoop = fct_recode(hoop, near = "2.3", med = "4.14", med = "5.98", far = "7.82"),
+         condition = fct_recode(condition, 
+                            "1c: reaching" = "table",
+                            "1c: sudoku" = "sudoku")) -> dc
+
+dacc <- bind_rows(db , dc) %>%
+  filter(condition != "tableFail")
+
+dacc %>% ggplot(aes(hoop, accuracy, colour = condition)) +
+  geom_jitter(alpha = 0.5, height = 0, width = 0.1) + 
+  scale_colour_manual(values = c("#ee7733", "#33bbee", "#009988", "#0077bb" , "#cc3311"))
 
 #####################################
 # plot the Bayesian model
