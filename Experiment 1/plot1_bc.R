@@ -8,8 +8,46 @@ library(tidybayes)
 
 theme_set(theme_bw())
 
+#### Any constants ####
+slab_size <- 0.46
 
+# plot accuracy
 
+db <- read_sav("1B/data/DATACOLLECTIONPHYSICAL.sav") 
+load("1C/scratch/df_P2")
+dc <- as_tibble(df_P2)
+rm(df_P2)
+
+# process 1b
+db %>%
+    mutate(person = as.factor(1:nrow(db))) %>%
+    select(person, Condition, 
+           AccuracyCHoopTrial1, AccuracyCHoopTrial2, AccuracyCHoopTrial3,
+           AccuracyMHoopTrial1, AccuracyMHoopTrial2, AccuracyMHoopTrial3,
+           AccuracyFHoopTrial1, AccuracyFHoopTrial2, AccuracyFHoopTrial3) %>%
+    rename(condition = "Condition") %>%
+  pivot_longer(-c(person, condition), names_to = "hoop", values_to = "hit") %>%
+  mutate(
+      condition = as_factor(condition),
+      hoop = as_factor(hoop),
+      hoop = fct_collapse(hoop, 
+                          near = c("AccuracyCHoopTrial1", "AccuracyCHoopTrial2", "AccuracyCHoopTrial3"),
+                          med   = c("AccuracyMHoopTrial1", "AccuracyMHoopTrial2", "AccuracyMHoopTrial3"),
+                          far   = c("AccuracyFHoopTrial1", "AccuracyFHoopTrial2", "AccuracyFHoopTrial3"))) %>%
+  group_by(person, condition, hoop) %>%
+  summarise(accuracy = mean(hit)) %>%
+  ggplot(aes(hoop, accuracy, fill = condition)) + 
+  geom_boxplot() +
+  scale_x_discrete("hoop separation")
+
+# process 1c
+dc %>% group_by(Participant, hoop_dist, Condition) %>%
+  summarise(accuracy = mean(Accuracy)) %>%
+  rename(condition = "Condition", hoop = "hoop_dist") %>%
+  mutate(hoop = slab_size * hoop)
+
+#####################################
+# plot the Bayesian model
 prior <- read_csv("1B/1_prior.csv")
 
 post_b <- read_csv("1B/1b_post.csv")
@@ -21,7 +59,6 @@ post_b %>% mutate(group = as_factor(group),
                                      "1b: logic" = "LogicPuzzles",
                                      "1b: maths" = "MathsQuestions")) -> post_b
 
-
 post_c %>% mutate(group = as_factor(group),
                   group = fct_recode(group, 
                                      "1c: reaching" = "table",
@@ -32,8 +69,6 @@ post <- bind_rows(prior, post_b, post_c) %>%
   mutate(group = as_factor(group),
          hoops = as_factor(hoops), 
          hoops = fct_relevel(hoops, "near"))
-
-                  
 
 post %>% filter(param == "hu") %>%
   mutate(p = plogis(.value)) %>%

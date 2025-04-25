@@ -64,6 +64,20 @@ plt
 
 # save this 
 ggsave("scratch/plots/double_blind.png", width = 8, height = 3.2)
+
+# accuracy plot
+
+df %>% group_by(Participant, Order, Hoop.dist) %>%
+  summarise(accuracy = mean(Hit)) %>%
+  mutate(Hoop.dist = slab_size * Hoop.dist,
+         Hoop.dist= factor(Hoop.dist)) %>%
+  ggplot(aes(Hoop.dist, accuracy, fill = Order)) + 
+  geom_boxplot() +
+  scale_fill_ptol() +
+  theme(strip.background = element_blank()) + 
+  scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  scale_x_discrete("Delta (Metres)")
+
  
 #### Analyses ####
 
