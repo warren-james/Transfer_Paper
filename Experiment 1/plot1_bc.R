@@ -55,8 +55,9 @@ dacc <- bind_rows(db , dc) %>%
   filter(condition != "tableFail")
 
 dacc %>% ggplot(aes(hoop, accuracy, colour = condition)) +
-  geom_jitter(alpha = 0.5, height = 0, width = 0.1) + 
-  scale_colour_manual(values = c("#ee7733", "#33bbee", "#009988", "#0077bb" , "#cc3311"))
+  geom_jitter(alpha = 0.5, height = 0, width = 0.25) + 
+  scale_colour_manual(values = c("#ee7733", "#33bbee", "#009988", "#0077bb" , "#cc3311")) +
+  facet_wrap(~condition, nrow = 1)
 
 #####################################
 # plot the Bayesian model
@@ -98,7 +99,6 @@ post %>% filter(param == "b") %>%
   rename(b = ".value") %>%
   select(-param) -> post_b
 
-
 ggplot(post_b, aes(hoops, pos, colour = group)) + 
   stat_interval(alpha = 0.5, position = position_dodge(width = 0.5)) +
   scale_y_continuous("normalised distance from centre", limits = c(0, 4), expand = c(0, 0)) +
@@ -109,28 +109,44 @@ ggplot(post_b, aes(hoops, pos, colour = group)) +
 plt_hu + plt_b + plot_layout(guides = "collect")
 ggsave("exp1bc_post.png", width = 8, height = 2.5)
 
-
 post %>% 
   mutate(.value = if_else(param=="hu", plogis(.value), exp(.value))) -> post
 
 post %>%
   group_by(param, hoops, group) %>%
   median_hdci(.value) %>%
+  select(param, hoops, group, .lower, .upper) %>%
+  mutate(.lower = round(.lower, 3), .upper = round(.upper,3)) %>%
+  unite(ci, .lower, .upper,  sep = " - ")
   knitr::kable()
 
 # compute differences
 post %>% filter(hoops == "far", str_detect(group, "1b")) %>%
   pivot_wider(names_from = group, values_from = ".value") %>%
-  mutate(reach_diff = `1b: maths` - `1b: reaching`,
-         logic_diff = `1b: maths` - `1b: logic`) %>%
-  select(param, reach_diff, logic_diff) %>%
+  mutate(maths_reaching = `1b: maths` - `1b: reaching`,
+         maths_logic = `1b: maths` - `1b: logic`,
+         reaching_logic = `1b: reaching` - `1b: logic`) %>%
+  select(param, maths_reaching, maths_logic, reaching_logic) %>%
   group_by(param) %>%
-  median_hdci(reach_diff,logic_diff)
-
+  median_hdci(maths_reaching, maths_logic, reaching_logic) %>%
+  select(-.width, -.point, -.interval) %>%
+  pivot_longer(-param) %>%
+  mutate(value = round(value, 3)) %>%
+  pivot_wider() %>%
+  unite(maths_reaching, maths_reaching.lower, maths_reaching.upper, sep = " - ") %>%
+  unite(maths_logic, maths_logic.lower, maths_logic.upper, sep = " - ") %>%
+  unite(reaching_logic, reaching_logic.lower, reaching_logic.upper, sep = " - ") %>%
+  pivot_longer(-param) %>%
+  pivot_wider(names_from = "param") %>%
+  knitr::kable()
 
 post %>% filter(hoops == "far", str_detect(group, "1c")) %>%
   pivot_wider(names_from = group, values_from = ".value") %>%
-  mutate(reach_diff = `1c: sudoku` - `1c: reaching`) %>%
-  select(param, reach_diff) %>%
+  mutate(sudoko_reaching = `1c: sudoku` - `1c: reaching`) %>%
+  select(param, sudoko_reaching) %>%
   group_by(param) %>%
-  median_hdci(reach_diff)
+  median_hdci(sudoko_reaching) %>%
+  select(-.width, -.point, -.interval) %>%
+  pivot_longer(-param) %>%
+  mutate(value = round(value, 3)) %>%
+  pivot_wider()
