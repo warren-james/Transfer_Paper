@@ -53,12 +53,12 @@ plt <- ggplot(df, aes(Hoop.dist*slab_size, Participant.pos)) +
              aes(x, y), shape  = 4, colour = "black", size = 3 ) + 
   geom_jitter(aes(colour = Order), height = 0, width = 0.1,  alpha = 0.4) + 
   facet_wrap(~Participant, ncol = 8) +
-  scale_x_continuous("Delta (Metres)", limits = c(1,7)) +
+  scale_x_continuous("hoop separation (meters)", limits = c(1,7)) +
   scale_y_continuous("Normalised Standing Position") +
   theme_bw() +
   scale_colour_ptol() +
   theme(strip.background = element_blank(),
-        # strip.text.x = element_blank(), 
+        strip.text.x = element_blank(), 
         legend.position = "none") 
 plt
 
@@ -71,14 +71,15 @@ df %>% group_by(Participant, Order, Hoop.dist) %>%
   summarise(accuracy = mean(Hit)) %>%
   mutate(Hoop.dist = slab_size * Hoop.dist,
          Hoop.dist= factor(Hoop.dist)) %>%
-  ggplot(aes(Hoop.dist, accuracy, fill = Order)) + 
+  rename(group = "Order") %>%
+  ggplot(aes(Hoop.dist, accuracy, fill = group)) + 
   geom_boxplot() +
   scale_fill_ptol() +
   theme(strip.background = element_blank()) + 
   scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
-  scale_x_discrete("Delta (Metres)")
+  scale_x_discrete("hoop separation (meters)", labels = c(2,4,6))
 
- 
+ggsave("scratch/plots/exp1a_acc.png", width = 4, height = 3.2)
 #### Analyses ####
 
 # model how relative error varies with Delta (near v far) and group
