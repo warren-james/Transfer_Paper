@@ -1,0 +1,223 @@
+---
+title: "Instructed Eye movements"
+output: 
+  pdf_document:
+  toc: true
+  toc_depth: 2
+fig_height: 2
+fig_width: 6
+
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+knitr::opts_chunk$set(fig.width=6, fig.height=3) 
+```
+
+# Data overview 
+
+This is to keep track of what everything means in the datasets as well as put all plots in one place to keep up to date. 
+
+```{r load in the data}
+load("scratch/Elle_switch_nar_data")
+
+# round switch point
+switch_df$switch_point <- as.numeric(switch_df$switch_point)
+switch_df$switch_point <- round(switch_df$switch_point)
+
+# show first few lines of data set
+head(switch_df)
+```
+
+Part: For the second session this can be either 2 or 3. 2 is when there were no cues present, and 3 is when there were cues 
+
+Separation: The separation of the two side boxes from the centre. Currently this is in pixels, but this can be changed
+
+Fixated box: Says which box was fixated. 1 means the participant fixated the centre, 2 and 3 mean the side box was fixated.
+
+Centre: This column was added to look at proportions of where participants looked. 1 means the centre was fixated, 0 means one of the side boxes was fixated.
+
+# Plotting data
+## Accuracy
+
+The next few box plots show comparisons of accuracy between the conditions in both the first and second halves. For this, the first half for participants in the "Instructions" condition were being cued as to where to look.
+
+The data were separated so as to be able to compare the two groups in both halves of the experiment.
+
+``` {r separate datasets, include=FALSE}
+# no instructions/first half 
+no_inst_1 <- switch_df[switch_df$condition == "No_instructions" & 
+                         switch_df$block < 5,]
+
+# no instructions/second half 
+no_inst_2 <- switch_df[switch_df$condition == "No_instructions" & 
+                         switch_df$block > 4,]
+
+# instructions/tutorial
+inst_tut <- switch_df[switch_df$condition == "Instructions" & 
+                        switch_df$part == 3,]
+
+# instructions/task
+inst_tas <- switch_df[switch_df$condition == "Instructions" & 
+                        switch_df$part == 2,]
+
+```
+
+``` {r Make the plots, echo = FALSE}
+# First half
+fh_tut <- rbind(inst_tut, no_inst_1)
+
+# set data for boxplts 
+temp <- group_by(fh_tut,
+                 participant,
+                 condition)
+ftut_box_dat <- summarise(temp,
+                          correct = mean(correct))
+
+# tidy 
+rm(temp)
+
+# get numbers for in text 
+temp <- group_by(fh_tut, condition)
+ftut_overall <- summarise(temp,
+                          correct = mean(correct))
+
+# make plots 
+ftut_box_plt <- ggplot(ftut_box_dat, 
+                       aes(condition, 
+                           correct))
+ftut_box_plt <- ftut_box_plt + geom_boxplot()
+ftut_box_plt <- ftut_box_plt + ggtitle("First Half")
+
+
+# display plots
+ftut_box_plt
+```
+
+The average number of correct trials for the instructed group was `r round(ftut_overall$correct[ftut_overall$condition == "Instructions"], digits = 3)` and for the non-instructed group it was `r round(ftut_overall$correct[ftut_overall$condition == "No_instructions"], digits = 3)` 
+
+``` {r show second half plot, echo = FALSE}
+# Second half
+sh_tas <- rbind(inst_tas, no_inst_2)
+
+# set data for boxplts 
+temp <- group_by(sh_tas,
+                 participant,
+                 condition)
+stas_box_dat <- summarise(temp,
+                          correct = mean(correct))
+
+# tidy 
+rm(temp)
+
+# get numbers for in text 
+temp <- group_by(sh_tas, condition)
+stas_overall <- summarise(temp,
+                          correct = mean(correct))
+
+# make plots 
+stas_box_plt <- ggplot(stas_box_dat, 
+                       aes(condition, 
+                           correct))
+stas_box_plt <- stas_box_plt + geom_boxplot()
+stas_box_plt <- stas_box_plt + ggtitle("Second Half")
+
+# show plot
+stas_box_plt
+```
+
+The average number of correct trials for the instructed group was `r round(stas_overall$correct[stas_overall$condition == "Instructions"], digits = 3)` and for the non-instructed group it was `r round(stas_overall$correct[stas_overall$condition == "No_instructions"], digits = 3)` 
+
+## Fixation proportions
+The same again is shown here, first half by both conditions and the same for the second half
+
+``` {r make proportions plots for first half, fig.height = 7, fig.width = 7.5, echo = FALSE}
+# centre proportions
+temp <- group_by(fh_tut, participant,separation,condition)
+centre_prop <- summarise(temp, prop_fixated = mean(centre))
+centre_prop$box <- "centre"
+
+# side proportions
+side_prop <- summarise(temp, prop_fixated = 1 - mean(centre))
+side_prop$box <- "side"
+
+# tidy
+rm(temp)
+
+# merge data
+plt_dat_fh <- rbind(centre_prop, side_prop)
+
+# tidy 
+rm(centre_prop, side_prop)
+
+# add back in switch_points
+temp <- group_by(fh_tut, participant, condition)
+switch_points <- summarise(temp, switch_point = unique(switch_point))
+
+# make plot 
+# tidy 
+rm(temp)
+
+# now to make the plots 
+prop_plt_fh <- ggplot(data = plt_dat_fh, 
+                      aes(x = separation,
+                          y = prop_fixated))
+prop_plt_fh <- prop_plt_fh + geom_area(aes(colour = box,
+                                           fill = box),
+                                       position = "stack")
+prop_plt_fh <- prop_plt_fh + geom_vline(data = switch_points,
+                                        aes(xintercept = as.numeric(switch_point)), 
+                                        linetype = "dashed")
+prop_plt_fh <- prop_plt_fh + ggtitle("First Half")
+prop_plt_fh <- prop_plt_fh + facet_wrap(~condition + participant)
+prop_plt_fh
+```
+
+``` {r make proportions plots for second half, fig.height = 7, fig.width = 7.5, echo = FALSE}
+# centre proportions
+temp <- group_by(sh_tas, participant,separation,condition)
+centre_prop <- summarise(temp, prop_fixated = mean(centre))
+centre_prop$box <- "centre"
+
+# side proportions
+side_prop <- summarise(temp, prop_fixated = 1 - mean(centre))
+side_prop$box <- "side"
+
+# tidy
+rm(temp)
+
+# merge data
+plt_dat_sh <- rbind(centre_prop, side_prop)
+
+# tidy 
+rm(centre_prop, side_prop)
+
+# add back in switch_points
+temp <- group_by(sh_tas, participant, condition)
+switch_points <- summarise(temp, switch_point = unique(switch_point))
+
+# make plot 
+# tidy 
+rm(temp)
+
+# now to make the plots 
+prop_plt_sh <- ggplot(data = plt_dat_sh, 
+                      aes(x = separation,
+                          y = prop_fixated))
+prop_plt_sh <- prop_plt_sh + geom_area(aes(colour = box,
+                                           fill = box),
+                                       position = "stack")
+prop_plt_sh <- prop_plt_sh + geom_vline(data = switch_points,
+                                        aes(xintercept = as.numeric(switch_point)), 
+                                        linetype = "dashed")
+prop_plt_sh <- prop_plt_sh + ggtitle("Second Half")
+prop_plt_sh <- prop_plt_sh + facet_wrap(~condition + participant)
+prop_plt_sh
+```
+
+# Notes
+Currently there is a discrepancy between my caluculations of participants' switching points and Josephine's in the data which means that (by my estimates) some participants only have 3 separations below the switch point and 5 above.
+
+``` {r Final tidy, include = FALSE}
+rm(list = ls())
+```
