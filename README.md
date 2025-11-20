@@ -14,4 +14,4 @@ How to recreate the analysis for the paper:
  - `Experiment 1/1B/analysis.R` fits Bayesian model for Experiment 1B
  - `Experiment 1/1C/1_Process_and_Plot_data.R` pre-processes data for Experient 1C
  - `Experiment 1/1C/analysis.R` fits Bayesian model for Experiment 1C
- - 
+ - `Experiment 1/plot1_bc.R` reads results of previous models and creates plot 5
