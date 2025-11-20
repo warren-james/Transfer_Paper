@@ -6,9 +6,7 @@ library(patchwork)
 library(tidybayes)
 
 options(mc.cores = 8)
-
 theme_set(theme_bw())
-
 
 dat <- read_sav("data/DATACOLLECTIONPHYSICAL.sav") 
 
@@ -41,7 +39,6 @@ dat %>%
 
 summary(dat)
 
-
 plt <- ggplot(dat, aes(x = distance, y = standing_position, colour = condition))
 plt <- plt + geom_point(alpha = 0.5)
 plt <- plt + facet_wrap(~person, nrow = 3)
@@ -51,9 +48,8 @@ plt <- plt + scale_x_continuous("Delta (metres)")
 plt <- plt + scale_y_continuous("Normalised Standing Position")
 plt
 
-ggsave('standing_position.pdf', width = 8, height = 6)
-ggsave('standing_position.png', width = 8, height = 6)
-
+ggsave('plots/standing_position.pdf', width = 8, height = 6)
+ggsave('plots/standing_position.png', width = 8, height = 6)
 
 my_priors <- c(prior(normal(0, 0.5), class = sd),
                prior(normal(-1.5, 1), class = b),
@@ -94,7 +90,7 @@ m <- brm(bf(standing_position ~ 0 + hoop:condition + (0 + hoop:condition | perso
          backend = "cmdstanr")
 
 ##############
-# plot predictions
+# get posteriors
 ##############
 m %>% gather_draws(`[b|hu]_.*`, regex = TRUE) %>%
   mutate(param = if_else(str_detect(.variable, "hu"), "hu", "b"),
@@ -105,6 +101,10 @@ m %>% gather_draws(`[b|hu]_.*`, regex = TRUE) %>%
          hoop = fct_relevel(hoop, "near")) -> post
 
 write_csv(post, "1b_post.csv")
+
+
+
+
 
 # dat %>% group_by(person, hoop, condition) %>%
 #   summarise(Prc = mean(standing_position == 0)) -> df_prc

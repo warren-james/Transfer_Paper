@@ -5,7 +5,6 @@ library(brms)
 library(patchwork)
 library(tidybayes)
 
-
 theme_set(theme_bw())
 
 #### Any constants ####
