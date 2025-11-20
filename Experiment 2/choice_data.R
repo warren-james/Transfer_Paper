@@ -35,7 +35,6 @@ dat %>% mutate(
   group = if_else((participant %in% intructed_group$participant) & (group != "simulated") & (block == 2),
                   "instruction", group)) -> dat
 
-
 dat %>% mutate(fixated_side = if_else(fixated != 1, 1, 0)) -> dat
 
 # fix sep variable - convert to visual degrees
@@ -126,13 +125,10 @@ post %>%
   ggthemes::scale_color_ptol() + 
   theme(legend.position = "none") -> plt2
 
-
-
 post %>%
   group_by(group, block) %>%
   median_hdci(slope) %>%
   knitr::kable()
-
 
 ### difference in acc
 
