@@ -154,7 +154,7 @@ dot_plt
 #NB: Sudoku is the top row
 
 # save
-ggsave("scratch/Anca_Part2.pdf")
+ggsave("plots/Anca_Part2.pdf")
 
 #### New plot: Just Second Session ####
 plt_second <- df_P2[df_P2$Session == 2,]
@@ -173,7 +173,7 @@ plt$labels$y <- "Normalised Standing Position"
 plt
 
 # save 
-ggsave("scratch/Anca_part2_session2_jitter.png")
+ggsave("plots/Anca_part2_session2_jitter.png")
 
 
 

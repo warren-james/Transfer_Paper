@@ -1,7 +1,3 @@
-#### This script is for double blind experiment ####
-# has data for the reaching and throwing task for each participant
-# No need to worry about switch points for this data
-# They either did nothing or the reaching task before the throwing task 
 #### Notes ####
 # for Order: 0 = unprimed. 1 = primed 
 # Position is centred on 0 
@@ -17,6 +13,7 @@ options(mc.cores = 8,
         digits = 2)
 
 theme_set(theme_bw())
+
 #### Constants ####
 slab_size <- 0.46
 
@@ -31,7 +28,7 @@ df$Participant <- as_factor(df$Participant)
 
 # sort out levels for Order 
 df$Order <- as.factor(df$Order)
-levels(df$Order) <- c("Control", "Primed") # , "Optimal"
+levels(df$Order) <- c("Control", "Primed") 
 
 # Normalise position 
 df$Participant.pos <- abs(df$Participant.pos/df$Hoop.dist)
@@ -62,11 +59,10 @@ plt <- ggplot(df, aes(Hoop.dist*slab_size, Participant.pos)) +
         legend.position = "none") 
 plt
 
-# save this 
-ggsave("scratch/plots/double_blind.png", width = 8, height = 3.2)
+# save
+ggsave("plots/double_blind.png", width = 8, height = 3.2)
 
 # accuracy plot
-
 df %>% group_by(Participant, Order, Hoop.dist) %>%
   summarise(accuracy = mean(Hit)) %>%
   mutate(Hoop.dist = slab_size * Hoop.dist,
@@ -79,11 +75,11 @@ df %>% group_by(Participant, Order, Hoop.dist) %>%
   scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
   scale_x_discrete("hoop separation (meters)", labels = c(2,4,6))
 
-ggsave("scratch/plots/exp1a_acc.png", width = 4, height = 3.2)
+ggsave("plots/exp1a_acc.png", width = 4, height = 3.2)
+
 #### Analyses ####
 
 # model how relative error varies with Delta (near v far) and group
-
 df %>% filter(Hoop.dist %in% c(5, 13)) %>%
   mutate(hoops = if_else(Hoop.dist == 5, "near", "far"),
          hoops = as_factor(hoops),
@@ -115,7 +111,6 @@ m %>% gather_draws(`[b|hu]_.*`, regex = TRUE) %>%
   ungroup() %>%
   select(-.variable) -> prior
 
-
 prior %>% filter(param == "hu") %>%
   mutate(group = "prior", 
          p = plogis(.value)) %>%
@@ -128,7 +123,6 @@ prior %>% filter(param == "b") %>%
   rename(b = ".value") %>%
   select(-param) -> prior_b
 
-
 m <- brm(bf(Participant.pos ~ 0 + hoops:Order + (0 + hoops | Participant),
             hu ~ 0 + hoops:Order + (0 + hoops | Participant)), 
          data = df,
@@ -138,7 +132,6 @@ m <- brm(bf(Participant.pos ~ 0 + hoops:Order + (0 + hoops | Participant),
          backend = "cmdstanr")
 
 # plot posterior
-
 df %>% modelr::data_grid(hoops, Order) %>%
   add_predicted_draws(m, re_formula = NA, value = "error") %>%
   ggplot(aes(error, fill = Order)) +
@@ -166,7 +159,7 @@ post %>% filter(param == "hu") %>%
   mutate(p = plogis(.value)) %>%
   rename(hu = ".value") %>%
   select(-param) %>%
-  bind_rows(prior_hu) %>%
+  #bind_rows(prior_hu) %>%
   mutate(group = as_factor(group),
          group = fct_relevel(group, "prior")) -> post_hu
 
@@ -182,7 +175,7 @@ post %>% filter(param == "b") %>%
   mutate(pos = exp(.value)) %>%
   rename(b = ".value") %>%
   select(-param) %>%
-  bind_rows(prior_b) %>%
+  #bind_rows(prior_b) %>%
   mutate(group = as_factor(group),
          group = fct_relevel(group, "prior"))-> post_b
 
@@ -199,7 +192,7 @@ ggplot(post_b, aes(hoops, pos, colour = group)) +
   scale_fill_ptol() -> plt_b
 
 plt_hu + plt_b + plot_layout(guides = "collect")
-ggsave("scratch/plots/model_fit.png", width = 8, height = 2.5)
+ggsave("plots/model_fit.png", width = 8, height = 2.5)
 
 
 # are there differences between conditions?
