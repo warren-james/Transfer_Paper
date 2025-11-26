@@ -3,7 +3,7 @@ How to recreate the analysis for the paper:
 
 **Experiment 1**
 
-*Experiment 1As*
+*Experiment 1A*
 
  - `Experiment 1/1A/1_process_data_and_plots.R` creates Figures 2, 3 and 4 and carries out related analysis
 
@@ -19,6 +19,6 @@ How to recreate the analysis for the paper:
 
 **Experiment 2**
 
-- `Experiemnt 2/choice_data.R` fits model and plots for Experiment 2
+- `Experiment 2/choice_data.R` fits model and plots for Experiment 2
 - `Experiment 2/1_part1_analysis.R` parse data and fit model for Exp 2, supp. mat.
 - `Experiment 2/2_part2_analysis.R` plot model for supp. mat.
