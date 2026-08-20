@@ -20,7 +20,7 @@ rm(df_P2)
 # process 1b
 db %>%
     mutate(person = (1:nrow(db))) %>%
-    select(person, Condition, 
+    dplyr::select(person, Condition, 
            AccuracyCHoopTrial1, AccuracyCHoopTrial2, AccuracyCHoopTrial3,
            AccuracyMHoopTrial1, AccuracyMHoopTrial2, AccuracyMHoopTrial3,
            AccuracyFHoopTrial1, AccuracyFHoopTrial2, AccuracyFHoopTrial3) %>%
@@ -41,7 +41,8 @@ db %>%
                             "1b: maths" = "MathsQuestions")) -> db
 
 # process 1c
-dc %>% group_by(Participant, hoop_dist, Condition) %>%
+dc %>% 
+  group_by(Participant, hoop_dist, Condition) %>%
   summarise(accuracy = mean(Accuracy)) %>%
   rename(condition = "Condition", hoop = "hoop_dist", person = "Participant") %>%
   mutate(hoop = factor(slab_size * hoop),
@@ -51,12 +52,14 @@ dc %>% group_by(Participant, hoop_dist, Condition) %>%
                             "1c: sudoku" = "sudoku")) -> dc
 
 dacc <- bind_rows(db , dc) %>%
-  filter(condition != "tableFail")
+  dplyr::filter(condition != "tableFail")
 
 dacc %>% ggplot(aes(hoop, accuracy, colour = condition)) +
   geom_jitter(alpha = 0.5, height = 0, width = 0.25) + 
   scale_colour_manual(values = c("#ee7733", "#33bbee", "#009988", "#0077bb" , "#cc3311")) +
   facet_wrap(~condition, nrow = 1)
+
+ggsave("figure6.png", width = 8, height = 2.5)
 
 #####################################
 # plot the Bayesian model
